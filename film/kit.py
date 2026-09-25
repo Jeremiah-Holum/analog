@@ -404,54 +404,80 @@ def elevator(M):
 
 
 def figure(loc, height=2.25, facing=math.pi, reach=0.0, head_tilt=0.0, toward=None):
-    """Tall, thin humanoid: skin-modifier skeleton for the body, pale featureless head.
-    facing = z-rotation (pi faces -y, toward the elevator). reach 0..1 lifts the arms forward."""
+    """Tall, gaunt, hunched humanoid (skin-modifier skeleton + subsurf + lumpy displacement) with a
+    featureless head and long fingers. facing = z-rotation (pi faces -y). reach 0..1 lifts the arms forward."""
     k = height / 2.25
-    r = reach
-    J = [  # (x, y, z, rx, ry)
-        (0, 0, 1.05, 0.17, 0.12), (0, 0, 1.28, 0.14, 0.1), (0, 0, 1.56, 0.19, 0.12),
-        (0, 0, 1.84, 0.055, 0.055), (0, -0.01, 1.93, 0.06, 0.06),
-        (-0.22, 0, 1.74, 0.07, 0.07), (0.22, 0, 1.74, 0.07, 0.07),
-        (-0.3, 0.02 - 0.35 * r, 1.3 + 0.25 * r, 0.05, 0.05), (0.3, 0.02 - 0.35 * r, 1.3 + 0.25 * r, 0.05, 0.05),
-        (-0.33, -0.02 - 0.75 * r, 0.85 + 0.6 * r, 0.038, 0.038), (0.33, -0.02 - 0.75 * r, 0.85 + 0.6 * r, 0.038, 0.038),
-        (-0.34, -0.04 - 0.98 * r, 0.6 + 0.8 * r, 0.025, 0.03), (0.34, -0.04 - 0.98 * r, 0.6 + 0.8 * r, 0.025, 0.03),
-        (-0.11, 0, 1.0, 0.09, 0.09), (0.11, 0, 1.0, 0.09, 0.09),
-        (-0.12, 0, 0.55, 0.065, 0.065), (0.12, 0, 0.55, 0.065, 0.065),
-        (-0.12, 0.02, 0.08, 0.045, 0.045), (0.12, 0.02, 0.08, 0.045, 0.045),
-        (-0.12, -0.15, 0.03, 0.04, 0.03), (0.12, -0.15, 0.03, 0.04, 0.03),
-    ]
-    E = [(0, 1), (1, 2), (2, 3), (3, 4), (2, 5), (2, 6), (5, 7), (6, 8), (7, 9), (8, 10), (9, 11), (10, 12),
-         (0, 13), (0, 14), (13, 15), (14, 16), (15, 17), (16, 18), (17, 19), (18, 20)]
+    V, E, R = [], [], []
+
+    def v(p, r, parent=None):
+        V.append(p); R.append(r if isinstance(r, tuple) else (r, r))
+        if parent is not None:
+            E.append((parent, len(V) - 1))
+        return len(V) - 1
+
+    # spine, hunched forward at the shoulders
+    pel = v((0, 0.0, 1.03), (0.15, 0.1))
+    lum = v((0, 0.015, 1.2), (0.115, 0.085), pel)
+    rib_lo = v((0, 0.0, 1.38), (0.16, 0.11), lum)
+    rib_hi = v((0, -0.02, 1.56), (0.18, 0.12), rib_lo)
+    back = v((0, 0.045, 1.69), (0.14, 0.125), rib_hi)
+    neck0 = v((0, -0.09, 1.76), 0.048, back)
+    neck1 = v((0, -0.19, 1.8), 0.04, neck0)
+    a = -1.25 * reach
+    for sx in (-1, 1):
+        drop = 0.06 if sx < 0 else 0.0          # one shoulder hangs lower
+        clav = v((sx * 0.17, -0.03, 1.73 - drop * 0.5), 0.055, back)
+        sh = v((sx * 0.25, -0.04, 1.68 - drop), 0.062, clav)
+
+        def arm(p):  # swing the arm forward about the shoulder
+            x, y, z = p
+            sy, sz = -0.04, 1.68 - drop
+            dy, dz = y - sy, z - sz
+            return (x, sy + dy * math.cos(a) - dz * math.sin(a), sz + dy * math.sin(a) + dz * math.cos(a))
+        z = lambda h: h - drop
+        up = v(arm((sx * 0.28, -0.05, z(1.46))), 0.046, sh)
+        el = v(arm((sx * 0.29, -0.07, z(1.2))), 0.032, up)
+        fa = v(arm((sx * 0.3, -0.1, z(0.97))), 0.037, el)
+        wr = v(arm((sx * 0.3, -0.13, z(0.74))), 0.021, fa)
+        palm = v(arm((sx * 0.3, -0.14, z(0.65))), (0.03, 0.014), wr)
+        for j, dx in enumerate((-0.03, -0.01, 0.01, 0.03)):   # very long fingers, slightly curled
+            k1 = v(arm((sx * 0.3 + dx, -0.15, z(0.54))), 0.009, palm)
+            k2 = v(arm((sx * 0.3 + dx * 1.3, -0.17, z(0.42))), 0.008, k1)
+            v(arm((sx * 0.3 + dx * 1.5, -0.15 + 0.02 * (j % 2), z(0.31))), 0.006, k2)
+        th = v(arm((sx * 0.3 - sx * 0.03, -0.18, z(0.6))), 0.01, palm)
+        v(arm((sx * 0.3 - sx * 0.04, -0.21, z(0.52))), 0.007, th)
+        # legs, knees a little bent
+        hip = v((sx * 0.095, 0.0, 0.98), 0.085, pel)
+        th_ = v((sx * 0.105, -0.015, 0.77), 0.07, hip)
+        kn = v((sx * 0.11, -0.075, 0.55), 0.045, th_)
+        calf = v((sx * 0.11, 0.0, 0.36), 0.05, kn)
+        an = v((sx * 0.11, 0.025, 0.1), 0.03, calf)
+        heel = v((sx * 0.11, 0.04, 0.035), 0.032, an)
+        v((sx * 0.115, -0.13, 0.02), (0.034, 0.018), heel)
     me = bpy.data.meshes.new("fig")
-    me.from_pydata([(x * k, y * k, z * k) for x, y, z, _, _ in J], E, [])
+    me.from_pydata([(x * k, y * k, z * k) for x, y, z in V], E, [])
     body = bpy.data.objects.new("fig", me)
     bpy.context.scene.collection.objects.link(body)
-    sk = body.modifiers.new("skin", 'SKIN')
-    body.modifiers.new("sub", 'SUBSURF').levels = 2
-    body.modifiers["sub"].render_levels = 2
-    for i, (_, _, _, rx, ry) in enumerate(J):
+    body.modifiers.new("skin", 'SKIN')
+    sub = body.modifiers.new("sub", 'SUBSURF'); sub.levels = sub.render_levels = 2
+    tex = bpy.data.textures.new("lumps", 'CLOUDS'); tex.noise_scale = 0.04
+    disp = body.modifiers.new("lumps", 'DISPLACE'); disp.texture = tex; disp.strength = 0.012 * k; disp.mid_level = 0.5
+    for i, (rx, ry) in enumerate(R):
         sv = me.skin_vertices[0].data[i]
         sv.radius = (rx * k, ry * k)
-        sv.use_root = (i == 0)
+        sv.use_root = (i == pel)
     body.data.materials.append(mat_flat("skin_dark", (0.014, 0.013, 0.013), 0.85))
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, -0.015 * k, 2.05 * k), segments=32, ring_count=16)
+    # featureless head hanging forward off the neck
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0.02 * k, -0.28 * k, 1.86 * k), segments=32, ring_count=16)
     head = bpy.context.object
-    head.scale = (0.105 * k, 0.12 * k, 0.155 * k)
-    head.data.materials.append(mat_flat("skin_head", (0.02, 0.019, 0.018), 0.85))  # featureless: never show a face
+    head.scale = (0.1 * k, 0.12 * k, 0.155 * k)
+    head.rotation_euler = (0.55 + head_tilt, 0.35, 0)   # drooping, cocked to one side
+    head.data.materials.append(mat_flat("skin_head", (0.02, 0.019, 0.018), 0.85))
+    hd = head.modifiers.new("lumps", 'DISPLACE'); hd.texture = tex; hd.strength = 0.05; hd.mid_level = 0.5
     bpy.ops.object.shade_smooth()
-    bpy.context.view_layer.update()
-    for s in (-1, 1):  # sunken black eyes, parented to the head so they follow its tilt
-        bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(s * 0.04 * k, -0.125 * k, 2.08 * k), segments=16, ring_count=8)
-        eye = bpy.context.object
-        eye.scale = (0.026 * k, 0.012 * k, 0.017 * k)
-        eye.data.materials.append(mat_flat("socket", (0.0, 0.0, 0.0), 0.9))
-        eye.parent = head
-        eye.matrix_parent_inverse = head.matrix_world.inverted()
-    head.rotation_euler[0] = head_tilt
-    parts = [body, head]
     bpy.ops.object.empty_add(location=loc)
     root = bpy.context.object
-    for o in parts:
+    for o in (body, head):
         o.parent = root
     if toward is not None:
         root.rotation_euler[2] = math.atan2(toward[0] - loc[0], -(toward[1] - loc[1]))
