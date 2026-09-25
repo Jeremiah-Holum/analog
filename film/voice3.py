@@ -26,7 +26,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(project.OUT, "vo")
 RAW = os.path.join(project.OUT, "vo_raw")
 REF = os.path.join(ROOT, "out", "tts_ref")   # reference voices are shared
-TRIES = 4
+TRIES = int(os.environ.get("TRIES", 4))
 
 
 def words(s):
