@@ -555,17 +555,17 @@ def film():
                 bed(0.012, 0.004, drone="drone_low", drone_g=0.15), glitches=[(0, 0.5, 1.0), (35.6, 0.4, 0.8)]))
     s4 = flicker(41, 0.6, "t4_door_a", "t4_door_b")
     add(Segment("42_door", 14, still_frames(s4, date4, 8470, shake=1.2, seed=8), "cam",
-                [(1.0, "G01", 1.0), (3.0, "G02", 1.0), (7.6, "G03", 1.0), (0, "breath", 0.25)],
+                [(1.0, "G01", 1.0), (3.0, "G02", 1.0), (7.6, "G03", 1.0)],
                 bed(0.012, 0.016, buzz_gate=gate_from_schedule(s4, "t4_door_a")), glitches=glitch_in))
     add(Segment("43_enter", SHOT_LEN["t4_enter"] / FPS, seq_frames("t4_enter", date4, 8485, bright=1.25), "cam",
-                [(7.0, "O01", 1.0), (12.0, "O02", 1.0), (0, "breath", 0.2)] + steps(0, 13.5, 1.3, gain=0.25),
+                [(7.0, "O01", 1.0), (12.0, "O02", 1.0)] + steps(0, 13.5, 1.3, gain=0.25),
                 bed(0.012, 0.012, 0.01, "drone_low", 0.25), glitches=glitch_in))
     def turn_zoom(t):  # he zooms in on the doorway, then drops the camera
         u = min(1, max(0, (t - 0.8) / 0.5)) if t < 2.3 else max(0, 1 - (t - 2.3) / 0.15)
         return (1 + 1.2 * u, 192 + (186 - 192) * u, 144 + (132 - 144) * u)
     tv_s = lambda t: ("t4_tv_feed", 1.0) if t < 6.9 else ("t4_tv_static", 1.0)
     add(Segment("44_tv", 7.4, still_frames(tv_s, date4, 8501, shake=0.9, seed=9), "cam",
-                [(1.2, "V01", 1.0), (3.6, "V02", 1.0), (0, "breath", 0.2)], bed(0.012, 0.0, 0.01, "drone_low", 0.35)))
+                [(1.2, "V01", 1.0), (3.6, "V02", 1.0)], bed(0.012, 0.0, 0.01, "drone_low", 0.35)))
     add(Segment("45_turn", SHOT_LEN["t4_turn"] / FPS, seq_frames("t4_turn", date4, 8508, bright=1.4, zoom=turn_zoom), "cam",
                 [(0.55, "stinger_big", 1.0), (2.45, "drop", 1.0)], bed(0.012, 0.0, 0.01),
                 glitches=[(0.4, 0.3, 0.6), (2.4, 0.6, 1.0)]))
@@ -577,7 +577,7 @@ def film():
             return ("t4_floor_2", 2.0)
         return ("t4_floor_1", 0.8)
     add(Segment("46_floor", 24.5, still_frames(floor_s, date4, 8512, shake=0.0, seed=10, zoom=lambda t: (1.3, 240, 150)), "cam",
-                [(0, "breath_fast", 0.35), (5.8, "step_heavy", 0.4), (7.2, "step_heavy", 0.6), (8.6, "step_heavy", 0.8),
+                [(5.8, "step_heavy", 0.4), (7.2, "step_heavy", 0.6), (8.6, "step_heavy", 0.8),
                  (9.4, "stinger", 0.5), (16.2, "drag", 0.9), (21.0, "knock_final", 1.0)],
                 bed(0.012, 0.0, 0.01, "drone_low", 0.3), glitches=[(9.4, 0.15, 0.5), (19.4, 0.2, 0.7), (24.0, 0.5, 1.0)]))
     add(Segment("47_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr", 0.6)], bed(0.004), damage=False))
