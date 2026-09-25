@@ -42,6 +42,9 @@ VO = {
 _WORDS = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
 for _i, _w in enumerate(_WORDS, 1):
     VO[f"G{_i:02d}"] = ("gary", _w + ("!" if _i >= 10 else "."))
+# single words are too short for the TTS model to say cleanly; these get a little more to work with
+for _i in (1, 2, 4, 5, 7, 8, 9, 10):
+    VO[f"G{_i:02d}"] = ("gary", f"That's {_WORDS[_i - 1].lower()}" + ("!" if _i >= 10 else "."))
 COUNTS = {}
 
 DELIVERY = {  # (reference voice, exaggeration, cfg_weight, temperature)

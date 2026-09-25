@@ -61,7 +61,7 @@ def film():
     g = GARY_COUNT
     hold = 4.2
     times = count_walk(g["n"], g["y0"], g["speed"])
-    add(Segment("14_count", hold + g["dur"], seq("g_count", 72, hold_first=hold), "cam",
+    add(Segment("14_count", hold + g["dur"] + 1.0, seq("g_count", 72, hold_first=hold), "cam",
                 [(0.3, "C01", 1.0)] + [(hold + t - 0.25, f"G{k + 1:02d}", 1.0) for k, t in enumerate(times)]
                 + [(hold + times[-1] + 1.3, "C02", 1.0), (hold + g["dur"] - 4.6, "C03", 1.0)]
                 + steps(hold, hold + g["dur"] - 0.5, 1.7),

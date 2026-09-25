@@ -98,3 +98,30 @@ is **non-commercial**. Before turning on ads:
 
 Everything else is fine for commercial use: the LibriTTS-R voice (CC BY 4.0, credited above),
 Chatterbox (MIT), Kokoro (Apache-2.0), and the renders and sound effects made for this project.
+
+---
+
+# ITEM 15: SPACE AVAILABLE
+
+- **Video:** `renders/item15_youtube.mp4` (4:16). **Thumbnail:** `renders/thumbnails/item15_panel.png`
+- **Title:** `ITEM 15` (alternatives: *space available*, *priced to move*, *555-0141*)
+
+```
+COULEE COUNTY SHERIFF'S DEPARTMENT
+EVIDENCE ITEM 15
+
+One (1) VHS cassette recovered from the offices of Coulee Commercial
+Realty, April 2, 1996. Found in a drawer labeled "BRENNER - DO NOT SHOW".
+
+space available.
+
+—
+
+This is a work of fiction. Voices are synthetic (AI text-to-speech).
+Voice: LibriTTS-R (Koizumi et al., 2023), CC BY 4.0, from LibriVox recordings.
+Sound effects: Freesound contributors, CC0.
+
+#analoghorror #foundfootage #vhs
+```
+
+ITEM 15 contains no RAVDESS audio, so it's clear for monetization.

@@ -11,6 +11,6 @@ look and the edit, and AI text-to-speech for the voices.
 - `renders/`: the finished film, thumbnails and channel art
 - `YOUTUBE.md`: upload notes, description and licensing
 - `LORE.md`: the series bible (the Brenner file, the rules, the people, the evidence catalog)
-- `item15/`: ITEM 15, "SPACE AVAILABLE" (in production)
+- `item15/`: ITEM 15, "SPACE AVAILABLE" (`renders/item15_youtube.mp4`)
 
 This is a work of fiction.
