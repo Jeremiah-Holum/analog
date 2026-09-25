@@ -222,7 +222,7 @@ class Segment:
         y = self.bed(n, rng) if self.bed else np.zeros(n)
         for t, name, g in self.cues:
             x = clip(name)
-            i = int(t * SR)
+            i = max(0, int(t * SR))
             if i >= n:
                 continue
             y[i:i + len(x)] += g * x[:n - i]
