@@ -205,7 +205,7 @@ for Brenner Mutual, on tracing paper, shows **ten** offices on three. The tenth 
 | 28 | **Bud Halloran** (1940–2002) | Salvage dealer | Bought the doors. Kept one (308) for his office. Found facing it in 2002. |
 | 29 | **Marcy Kline** (b. 1970) | WCRV-8 overnight master control | At 2:11 AM on March 12, 1999 (the 28th anniversary of the memo), WCRV aired an emergency message nobody scheduled. She was the only one in the building. She let it run. |
 | 30 | **Karl & Lise Engstrom** | Farm couple near Holmen | Bought a "nice old oak door" from Halloran in 2000 for their daughter's closet. |
-| 31 | **Nora Engstrom** (b. 1991) | Their daughter, 9 | The first child to count. Counted the rooms of the farmhouse for a school project: nine, and the closet. The Engstroms' camcorder is ITEM 23. *(writer's eyes only)* She stops at ten. She's the next Patty Lund. |
+| 31 | **Nora Engstrom** (b. 1991) | Their daughter, 9 | The first child to count. Counted the rooms of the farmhouse for a school project: nine, and the closet. The Engstroms' camcorder is ITEM 25. *(writer's eyes only)* She stops at ten. She's the next Patty Lund. |
 | 32 | **Father Tom Kaczmarek** (b. 1947) | St. Olaf's rectory | Four doors from the building went into his upstairs hall. In 2001 he tried to bless them, and taped it. The tape has him counting the doors aloud as he blesses each one. He blesses five. |
 | 33 | **Wendy Baer** (b. 1979) | Night clerk, Lakeview Motel | Room 10 had door 309 fitted in 1999. From 2001, every guest in Room 10 checks out at 2:11 AM and doesn't remember why. The motel closed in 2003 after the last one didn't check out. |
 | 34 | **The uploader** | *VHS-C 14* | Never identified on screen. *(writer's eyes only)* Amy Kessler, 2020s. The voice on her mother's answering machine told her the floor will let her father go "when every door is let." She's filling the floor. She's leasing 317. To you. |
@@ -271,7 +271,7 @@ complain about it.) Some items have letters (14-A to 14-D).
 | **9** | **1971** | **Reel-to-reel** | **Pruitt dictating Notice 71-117, crossing out drafts. Something knocks on his office door. He doesn't answer.** |
 | 10 | 1971–1979 | Ledger (pages on screen) | The Pruitt ledgers: eight years of knocks, logged by date and time. All at 2:11. |
 | 11 | 1974 | Super 8 | Company picnic. In one shot a third-floor window has something tall behind it. |
-| 12 | 1975–1991 | Cassette | Irene Voss counting along with Harold's reels. Seventeen years. |
+| 12 | 1975–1991 | Cassette | Irene Voss counting along with Harold's reels. Sixteen years. |
 | **13** | **1977** | **Cassette** | **Ray Pietrowski's line test. 0141 rings through, and someone picks up.** |
 | 14 | 1994 | VHS-C | **THE THIRD FLOOR: Dale Kessler's tapes. (released)** |
 | 15 | 1996 | VHS | **SPACE AVAILABLE: the walkthrough. (in production)** |
