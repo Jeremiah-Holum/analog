@@ -10,5 +10,7 @@ look and the edit, and AI text-to-speech for the voices.
 - `film/VOICE.md`: how the voices were made and made to sound human
 - `renders/`: the finished film, thumbnails and channel art
 - `YOUTUBE.md`: upload notes, description and licensing
+- `LORE.md`: the series bible (the Brenner file, the rules, the people, the evidence catalog)
+- `item15/`: ITEM 15, "SPACE AVAILABLE" (in production)
 
 This is a work of fiction.
