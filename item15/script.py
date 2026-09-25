@@ -38,11 +38,11 @@ VO = {
     "Z03": ("gary", "Going down!"),
 }
 
-# He counts the offices out loud like a salesman: one take, cut into G01..G12.
-COUNTS = {
-    "GCOUNT": ("gary", "G", list(range(1, 13)),
-               "One… two… three… four… five… six… seven… eight… nine… ten… eleven… twelve!"),
-}
+# He counts the offices out loud like a salesman, one door at a time, several seconds apart.
+_WORDS = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+for _i, _w in enumerate(_WORDS, 1):
+    VO[f"G{_i:02d}"] = ("gary", _w + ("!" if _i >= 10 else "."))
+COUNTS = {}
 
 DELIVERY = {  # (reference voice, exaggeration, cfg_weight, temperature)
     "gary":   ("gary", 0.55, 0.5, 0.75),
