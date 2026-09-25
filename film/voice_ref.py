@@ -9,7 +9,8 @@ The RAVDESS yell reference below is only used for the one shouted line, which is
 Dale's references are real acted speech from one actor (RAVDESS, Actor 21, CC BY-NC-SA 4.0,
 https://zenodo.org/records/1188976) - calm, scared and yelling - so his voice keeps human texture.
 The memo voice is Kokoro (bm_george)."""
-import glob, os, subprocess
+import glob, io, json, os, subprocess, urllib.request
+import numpy as np
 import soundfile as sf
 from kokoro_onnx import Kokoro
 
@@ -44,3 +45,25 @@ for name, voice, lang, speed, text in [
 ]:
     a, sr = k.create(text, voice=voice, speed=speed, lang=lang)
     sf.write(os.path.join(REF, name + ".wav"), a, sr)
+
+
+def libritts_speaker(spk="8455", seconds=20.0):
+    """Dale's reference: ~20 s of LibriTTS-R test-clean speaker 8455 (CC BY 4.0), longest utterances first."""
+    base = "https://datasets-server.huggingface.co/rows?dataset=mythicinfinity%2Flibritts_r&config=clean&split=test.clean"
+    rows = []
+    for off in range(0, 4900, 100):
+        d = json.load(urllib.request.urlopen(f"{base}&offset={off}&length=100", timeout=60))
+        rows += [r["row"] for r in d.get("rows", []) if r["row"]["speaker_id"] == spk]
+    rows.sort(key=lambda r: -len(r["text_normalized"]))
+    parts, tot = [], 0.0
+    for r in rows:
+        a, sr = sf.read(io.BytesIO(urllib.request.urlopen(r["audio"][0]["src"], timeout=60).read()))
+        parts += [a, np.zeros(int(0.3 * sr))]
+        tot += len(a) / sr
+        if tot > seconds:
+            break
+    sf.write(os.path.join(REF, "dale.wav"), np.concatenate(parts), sr)
+
+
+if not os.path.exists(os.path.join(REF, "dale.wav")):
+    libritts_speaker()
