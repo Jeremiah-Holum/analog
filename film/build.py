@@ -11,11 +11,12 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from timing import FPS, T1_COUNT, T2_COUNT, SHOT_LEN, count_walk
 import sfx
-from script import VO
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-import project
+import project, importlib
 OUT = project.OUT
+VO = importlib.import_module(project.SCRIPT).VO
+REALCAM = project.FILM != "film"   # ITEM 15+: camcorder auto-exposure, autofocus hunting, lens, mic AGC
 SEG = os.path.join(OUT, "seg")
 W, H = 640, 480
 SR = sfx.SR
@@ -155,6 +156,8 @@ STYLE = {
     "card": "gblur=sigma=0.8:sigmaV=0.4,rgbashift=rh=2:bh=-2,noise=alls=9:allf=t",
     "clean": "noise=alls=5:allf=t",
 }
+if REALCAM:   # a cheap camcorder lens: slight barrel distortion
+    STYLE["cam"] = "lenscorrection=k1=-0.08:k2=0.01:i=bilinear," + STYLE["cam"]
 
 
 # ============================================================ audio
@@ -205,8 +208,10 @@ def steps(t0, t1, rate=1.75, heavy=False, gain=0.35, jitter=0.05, fade_to=None):
 class Segment:
     """dur in seconds; frame(i, t) -> PIL 640x480; cues [(t, clip, gain)]; bed(n, rng) -> array"""
     def __init__(self, name, dur, frame, style="cam", cues=(), bed=None, glitches=(), tape_seed=0,
-                 damage=True, dropouts=0.12):
+                 damage=True, dropouts=0.12, af=()):
         self.name, self.dur, self.frame, self.style = name, dur, frame, style
+        self.realcam = REALCAM and style == "cam" and damage
+        self.af = [0.15] + list(af) if self.realcam else []   # autofocus hunts: at record start + given times
         self.cues, self.bed, self.glitches = list(cues), bed, list(glitches)
         self.tape = Tape(tape_seed or hash(name) % 10000)
         self.damage, self.dropouts = damage, dropouts
@@ -222,6 +227,9 @@ class Segment:
         n = int(round(self.dur * SR))
         rng = np.random.default_rng(abs(hash(self.name)) % 2 ** 32)
         y = self.bed(n, rng) if self.bed else np.zeros(n)
+        bed_part = y.copy()
+        if self.realcam:
+            self.cues = list(self.cues) + [(0.05, "handle", 0.5)]
         vo_end = -1.0
         for t, name, g in sorted(self.cues, key=lambda c: c[0]):
             x = clip(name)
@@ -235,6 +243,13 @@ class Segment:
             if i >= n:
                 continue
             y[i:i + len(x)] += g * x[:n - i]
+        if self.realcam:  # camcorder mic AGC: in the quiet gaps the gain creeps up and the hiss swells
+            cues_part = y - bed_part
+            k = int(0.4 * SR)
+            env = np.sqrt(np.convolve(cues_part ** 2, np.ones(k) / k, "same"))
+            agc = 1 + 1.4 * np.clip(1 - env / 0.03, 0, 1)
+            agc = np.convolve(agc, np.ones(k) / k, "same")
+            y = cues_part + bed_part * agc
         for g0, gd, gs in self.glitches:  # tape glitches crackle
             i, j = int(g0 * SR), min(n, int((g0 + gd) * SR))
             if j > i:
@@ -252,11 +267,22 @@ class Segment:
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", "-c:a", "aac", "-b:a", "192k",
                "-ar", str(SR), "-ac", "2", "-shortest", mp4]
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        gain = 1.0
         for i in range(nf):
             t = i / FPS
             img = self.frame(i, t)
             if img.size != (W, H):
                 img = img.resize((W, H))
+            if self.realcam:
+                # auto-exposure: partial compensation toward mid-grey, with lag (blows out, then settles)
+                lum = float(np.asarray(img.resize((32, 24))).mean()) / 255
+                target = min(1.35, max(0.8, (0.33 / max(lum, 0.02)) ** 0.35))
+                gain += (target - gain) * (1 - math.exp(-1 / (FPS * 0.7)))
+                img = brightness(img, gain)
+                # autofocus hunting: blur that pulses in and out around each hunt
+                r = sum(2.4 * math.exp(-((t - a) / 0.2) ** 2) * (0.55 + 0.45 * math.cos((t - a) * 30)) for a in self.af)
+                if r > 0.25:
+                    img = img.filter(ImageFilter.GaussianBlur(r))
             if self.damage:
                 img = self.tape.damage(img, t, self.glitch_at(t), dropouts=self.dropouts)
             p.stdin.write(img.tobytes())

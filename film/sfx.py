@@ -147,6 +147,13 @@ def vcr_clunk():
     return mix_at(2.0, parts + [(0.5, motor, 1.0)])
 
 
+def handling():
+    """Camcorder handling noise: a soft thump and a rustle of fingers on plastic."""
+    thump = sox(rng.normal(0, 1, 6000) * env(6000, 0.002, 0.03), "lowpass", 250) * 1.4
+    rustle = sox(rng.normal(0, 1, 12000) * env(12000, 0.02, 0.08), "bandpass", 2500, "1q") * 0.35
+    return mix_at(0.5, [(0.0, thump, 1.0), (0.06, rustle, 1.0)])
+
+
 def tone_1khz(d=1.0):
     return np.sin(2 * np.pi * 1000 * t(d)) * 0.25
 
@@ -171,6 +178,7 @@ BUILD = {
     "breath_fast": lambda: breathing(10.0, 1.6),
     "vcr": vcr_clunk,
     "tone": tone_1khz,
+    "handle": handling,
 }
 
 if __name__ == "__main__":
