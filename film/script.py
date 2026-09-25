@@ -25,7 +25,7 @@ VO = {
     "S03": ("dale", "So. I'm counting."),
     "S04": ("dale_q", "That's not right... this hall isn't this long."),
     "F01": ("dale_q", "Hey."),
-    "F02": ("dale", "Hey! Hey! This floor's closed! You can't be up here!"),
+    "F02": ("dale_yell", "Hey! Hey! This floor's closed! You can't be up here!"),
     "F03": ("dale_q", "Where'd he go?"),
     # TAPE 4 - desk
     "P01": ("dale_q", "November ninth."),
@@ -60,10 +60,11 @@ for i, w in NUMBER_WORDS.items():
 
 # Chatterbox delivery per style: (reference voice, exaggeration, cfg_weight, temperature)
 DELIVERY = {
-    "dale":   ("dale", 0.55, 0.5, 0.8),
-    "dale_q": ("dale", 0.7, 0.4, 0.8),
-    "dale_w": ("dale", 0.85, 0.3, 0.8),
-    "memo":   ("memo", 0.3, 0.6, 0.6),
+    "dale":      ("dale_calm", 0.5, 0.5, 0.8),
+    "dale_q":    ("dale_scared", 0.6, 0.45, 0.85),
+    "dale_w":    ("dale_scared", 0.7, 0.35, 0.85),
+    "dale_yell": ("dale_yell", 1.0, 0.3, 0.9),
+    "memo":      ("memo", 0.3, 0.6, 0.6),
 }
 # per-line overrides of exaggeration
-EXAGGERATE = {"F02": 1.1, "F01": 0.9, "W03": 0.8, "X05": 0.85, "V02": 1.0, "S04": 0.9}
+EXAGGERATE = {"F02": 1.2, "F01": 0.8, "W03": 0.7, "X05": 0.75, "V02": 0.9, "S04": 0.8}
