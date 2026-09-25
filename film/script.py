@@ -41,7 +41,7 @@ VO = {
     "G03": ("dale_q", "Okay. Okay... I'm just gonna look."),
     "O01": ("dale_w", "There's a whole office back here."),
     "O02": ("dale_w", "There's a TV on."),
-    "V01": ("dale_w", "That's the hall."),
+    "V01": ("dale_w", "That's the hallway."),
     "V02": ("dale_w", "That's the door I just came through. That's..."),
     # facilities memo (read aloud over the document)
     "M01": ("memo", "Brenner Mutual Insurance. Facilities notice, seventy one, dash one seventeen."),
