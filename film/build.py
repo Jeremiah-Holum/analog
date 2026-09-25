@@ -14,7 +14,8 @@ import sfx
 from script import VO
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "out")
+import project
+OUT = project.OUT
 SEG = os.path.join(OUT, "seg")
 W, H = 640, 480
 SR = sfx.SR
@@ -159,8 +160,8 @@ STYLE = {
 # ============================================================ audio
 @lru_cache(None)
 def clip(name):
-    for d in ("vo", "sfx"):
-        p = os.path.join(OUT, d, name + ".wav")
+    for p in (os.path.join(OUT, "vo", name + ".wav"), os.path.join(OUT, "sfx", name + ".wav"),
+              os.path.join(project.SHARED_SFX, name + ".wav")):
         if os.path.exists(p):
             return sfx.read(p)
     raise FileNotFoundError(name)
@@ -268,7 +269,7 @@ class Segment:
 # ------------------------------------------------------------ frame builders
 def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, play_for=3.0, bright=1.0, zoom=None):
     d = os.path.join(OUT, "frames", shot)
-    n = SHOT_LEN[shot]
+    n = SHOT_LEN.get(shot) or len([f for f in os.listdir(d) if f.endswith(".png")])
 
     def f(i, t):
         k = min(n, max(1, int(round((t - hold_first) * FPS)) + 1))
@@ -635,7 +636,11 @@ def memo_page():
 
 def main():
     only = sys.argv[1:]
-    segs = film()
+    if project.FILM == "film":
+        segs = film()
+    else:
+        import importlib
+        segs = importlib.import_module(project.EDIT).film()
     total = sum(s.dur for s in segs)
     print(f"{len(segs)} segments, {total / 60:.1f} min")
     for s in segs:
@@ -652,7 +657,7 @@ def main():
             f.write(f"file '{s.name}.mp4'\n")
     joined = os.path.join(OUT, "joined.mp4")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", joined], check=True)
-    final = os.path.join(OUT, "the_third_floor.mp4")
+    final = os.path.join(OUT, project.FINAL)
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", joined, "-c:v", "libx264", "-preset", "slow", "-crf", "21",
                     "-af", "loudnorm=I=-18:TP=-1.5:LRA=14", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", final],
                    check=True)

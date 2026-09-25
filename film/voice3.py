@@ -16,14 +16,16 @@ from num2words import num2words
 from faster_whisper import WhisperModel
 from chatterbox.tts import ChatterboxTTS
 from chatterbox.vc import ChatterboxVC
-from script import VO, COUNTS, DELIVERY, LOUDNESS
+import importlib, project
+_s = importlib.import_module(project.SCRIPT)
+VO, COUNTS, DELIVERY, LOUDNESS = _s.VO, _s.COUNTS, _s.DELIVERY, _s.LOUDNESS
 from voice import STYLE
 from prosody import measure
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "out", "vo")
-RAW = os.path.join(ROOT, "out", "vo_raw")
-REF = os.path.join(ROOT, "out", "tts_ref")
+OUT = os.path.join(project.OUT, "vo")
+RAW = os.path.join(project.OUT, "vo_raw")
+REF = os.path.join(ROOT, "out", "tts_ref")   # reference voices are shared
 TRIES = 4
 
 
@@ -156,17 +158,17 @@ class Voicer:
                 continue
             ok = True
             for (a, b), n in zip(iv, numbers):
-                p = os.path.join(RAW, f"{prefix}{n - 300:02d}.wav")
+                p = os.path.join(RAW, f"{prefix}{n % 300:02d}.wav")
                 sf.write(p, y[max(0, a - int(0.04 * sr)):b + int(0.08 * sr)], sr)
                 h = self.heard(p)
                 if str(n) not in h.replace(" ", "").replace("-", "") and text_score(num2words(n), h) < 0.6 \
-                        and text_score(f"three {num2words(n - 300)}", h) < 0.6:
+                        and text_score(f"three {num2words(n % 300)}", h) < 0.6:
                     print(f"{name}: chunk for {n} heard as {h!r}, retrying", flush=True)
                     ok = False
                     break
             if ok:
                 for n in numbers:
-                    key = f"{prefix}{n - 300:02d}"
+                    key = f"{prefix}{n % 300:02d}"
                     finish(os.path.join(RAW, key + ".wav"), key, style)
                 print(f"{name} ok, tries={attempt + 1}", flush=True)
                 return True
