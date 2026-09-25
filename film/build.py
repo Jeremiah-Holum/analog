@@ -267,9 +267,9 @@ class Segment:
 
 
 # ------------------------------------------------------------ frame builders
-def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, play_for=3.0, bright=1.0, zoom=None):
+def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, play_for=3.0, bright=1.0, zoom=None, n=None):
     d = os.path.join(OUT, "frames", shot)
-    n = SHOT_LEN.get(shot) or len([f for f in os.listdir(d) if f.endswith(".png")])
+    n = n or SHOT_LEN[shot]
 
     def f(i, t):
         k = min(n, max(1, int(round((t - hold_first) * FPS)) + 1))

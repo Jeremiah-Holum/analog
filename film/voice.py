@@ -13,6 +13,7 @@ STYLE = {
     "dale_yell": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 150 lowpass 6500 gain 6 overdrive 10 compand 0.01,0.1 -60,-60,-20,-8,0,-4 -2 reverb 35 40 70 gain -n -2"),
     "gary":   ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 140 lowpass 6500 compand 0.02,0.2 -60,-60,-30,-15,0,-8 -3 reverb 10 30 30 gain -n -4"),
     "gary_q": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 140 lowpass 6500 compand 0.02,0.2 -60,-60,-30,-15,0,-8 -3 reverb 12 30 40 gain -n -6"),
+    "gary_far": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 300 lowpass 2400 reverb 85 50 100 100 0 -2 gain -n -12"),
     "memo":   ("en_US-lessac-medium", 1.22, 0.4,  0.5,  "pitch -300 highpass 300 lowpass 3200 overdrive 4 reverb 45 50 80 gain -n -5"),
 }
 

@@ -6,6 +6,7 @@ VO = {
     "L02": ("gary", "And this is the Brenner Mutual building. Four floors, forty thousand square feet, and, folks, it is priced to move."),
     "L03": ("gary", "This was the, uh~, the old security desk. Monitors stay with the building, by the way."),
     "L04": ("gary", "Somebody left one on. Ha. Okay! Let's go up."),
+    "L05": ("gary", "Built in sixty-eight. Brenner Mutual was here right up until ninety-four. Moved out kind of sudden, I heard."),
     # elevator
     "E01": ("gary_q", "Now, three is closed off right now. Some kind of electrical thing. So we'll start on two."),
     "E02": ("gary", "Here we go."),
@@ -25,6 +26,12 @@ VO = {
     "O02": ("gary", "Even comes with a TV! Ha."),
     "O03": ("gary_q", "Anyway~..."),
     "O04": ("gary", "Lots of potential. Lots of potential."),
+    # walking back to the elevator
+    "B01": ("gary", "Okay! Back to the elevator."),
+    "B02": ("gary", "Twelve offices, folks. Twelve. I'm gonna have to update that listing."),
+    "B03": ("gary_q", "Huh. Light's going out down there. I'll put that on the list."),
+    # the tape keeps running, 2:11 AM
+    "K01": ("gary_far", "Thirteen… fourteen… fifteen… sixteen… seventeen…"),
     # sign-off at the elevator
     "Z01": ("gary", "Okay, I'm just gonna set this down here... there we go."),
     "Z02": ("gary", "So that's the Brenner building. Gary Lindqvist, Coulee Commercial. Call me any time. Five five five, oh one four one."),
@@ -40,5 +47,6 @@ COUNTS = {
 DELIVERY = {  # (reference voice, exaggeration, cfg_weight, temperature)
     "gary":   ("gary", 0.55, 0.5, 0.75),
     "gary_q": ("gary", 0.45, 0.5, 0.75),
+    "gary_far": ("gary", 0.4, 0.5, 0.75),
 }
-LOUDNESS = {"gary": -19, "gary_q": -21}
+LOUDNESS = {"gary": -19, "gary_q": -21, "gary_far": -34}

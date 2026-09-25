@@ -10,15 +10,7 @@ from timing import FPS, count_walk
 ROOT = s1.ROOT
 TEX = s1.TEX
 
-GARY_COUNT = dict(n=12, y0=1.5, speed=0.7, dur=34.0, stop_y=24.6)
-SHOT_LEN = {
-    "g_open2": 20 * FPS,
-    "g_open3": 8 * FPS,
-    "g_count": int(GARY_COUNT["dur"] * FPS),
-    "g_enter": 12 * FPS,
-    "g_turn": 7 * FPS,
-    "g_close": 4 * FPS,
-}
+from item15.timing import GARY_COUNT, SHOT_LEN
 
 
 def hall12(M, modes=None, **kw):
@@ -217,11 +209,47 @@ def g_close(with_doors=True):
     return build
 
 
+def g_back(dim):
+    """Walking back: the hallway seen from the far end, looking toward the elevator. When the light by the
+    elevator flickers, something is standing there."""
+    def build():
+        kit.reset(69); M = kit.Mats()
+        L, fx, _ = hall12(M)
+        kit.elevator(M)
+        s1.static_levels(fx, {0: 0.05 if dim else 1.0, 1: 0.5 if dim else 1.0})
+        if dim:
+            kit.figure((0.3, 2.2, 0), toward=(0, L - 3))
+        cam = kit.camera()
+        look(cam, (0.1, L - 3.0, 1.6), (0, 0, 1.4))
+        return ("still",)
+    return build
+
+
+def g_night(lit):
+    """2:11 AM. The camera is still sitting in the elevator. The doors open onto the dark third floor."""
+    def build():
+        kit.reset(70); M = kit.Mats()
+        L, fx, _ = hall12(M, modes=["dying", "dead", "dead", "dying", "dead", "dead", "dead", "dying", "dead"])
+        dl, dr = kit.elevator(M)
+        for d, x in ((dl, -0.74), (dr, 0.74)):
+            d.location.x = x
+        s1.static_levels(fx, {0: 0.35 if lit else 0.0, 3: 0.25 if lit else 0.05, 7: 0.3 if lit else 0.0})
+        for l in bpy.data.lights:
+            if l.name.startswith("carl"):
+                l.energy = 4
+        cam = kit.camera(20)
+        look(cam, (0.35, -1.55, 0.95), (0.0, 6.0, 1.35), roll=0.07)
+        return ("still",)
+    return build
+
+
 STILLS = {
     "g_lobby": lobby,
     "g_panel": elevator_panel,
     "g_tv": g_tv,
     "g_hold": g_close(False),
+    "g_back_lit": g_back(False), "g_back_dim": g_back(True),
+    "g_night_a": g_night(True), "g_night_b": g_night(False),
 }
 ANIMS = {
     "g_open2": open_on(2),

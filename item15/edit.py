@@ -4,14 +4,14 @@ import build as B
 from build import (Segment, bed, blue_frames, card_frames, seq_frames, static_frames, still_frames, steps,
                    flicker, gate_from_schedule, SERIF, FPS)
 from timing import count_walk
-from item15.shots import SHOT_LEN, GARY_COUNT
+from item15.timing import SHOT_LEN, GARY_COUNT
 
 DATE = "MAR. 14 1996"
 T0 = 10 * 3600 + 12 * 60 + 5            # 10:12:05 AM
 
 
 def seq(shot, clock, **kw):
-    return seq_frames(shot, DATE, T0 + clock, **kw)
+    return seq_frames(shot, DATE, T0 + clock, n=SHOT_LEN[shot], **kw)
 
 
 def still(name, clock, shake=0.9, seed=1, **kw):
@@ -42,8 +42,8 @@ def film():
                                              typed=False, align="center"), "card", [(0, "vcr", 0.5)], bed(0.01)))
 
     # lobby
-    add(Segment("10_lobby", 21, still("g_lobby", 0, 0.9, 2, play=True), "cam",
-                [(1.0, "L01", 1.0), (4.0, "L02", 1.0), (11.5, "L03", 1.0), (17.0, "L04", 1.0)],
+    add(Segment("10_lobby", 30, still("g_lobby", 0, 0.9, 2, play=True), "cam",
+                [(1.0, "L01", 1.0), (4.0, "L02", 1.0), (11.5, "L05", 1.0), (19.5, "L03", 1.0), (25.5, "L04", 1.0)],
                 room, glitches=[(0, 0.5, 1.0)]))
     # elevator panel
     add(Segment("11_panel", 8, still("g_panel", 26, 0.8, 3), "cam", [(0.6, "E01", 1.0)],
@@ -73,12 +73,25 @@ def film():
                 bed(0.012, 0.0, 0.01, "drone_low", 0.18)))
     add(Segment("17_turn", SHOT_LEN["g_turn"] / FPS, seq("g_turn", 130, bright=1.2), "cam",
                 [(2.2, "O03", 1.0), (4.2, "O04", 1.0)], bed(0.012, 0.006, 0.01)))
+    # walking back
+    back = flicker(151, 0.5, "g_back_lit", "g_back_dim", quiet=[(0, 6.5)])
+    add(Segment("17b_back", 16, still_frames(back, DATE, T0 + 150, shake=1.1, seed=6), "cam",
+                [(0.4, "B01", 1.0), (3.0, "B02", 1.0), (10.5, "B03", 1.0)] + steps(0, 15, 1.6),
+                bed(0.012, 0.014, 0.006, buzz_gate=gate_from_schedule(back, "g_back_lit")), glitches=cut_in))
     # sign-off at the elevator
     add(Segment("18_hold", 16, still("g_hold", 190, 0.0, 5), "cam",
                 [(0.0, "drop", 0.35), (0.4, "Z01", 1.0), (3.6, "Z02", 1.0), (13.2, "Z03", 1.0)],
                 hall, glitches=[(0, 0.4, 0.9)]))
     add(Segment("19_close", SHOT_LEN["g_close"] / FPS, seq("g_close", 206), "cam",
                 [(0.9, "elev_doors", 0.8), (1.35, "stinger_big", 0.9)], hall, glitches=[(3.6, 0.4, 1.0)]))
+    # the tape keeps running
+    add(Segment("19b_dark", 3.0, lambda i, t: B.Image.new("RGB", (B.W, B.H)), "cam", [], bed(0.014, 0.0, 0.012)))
+    night = flicker(211, 0.35, "g_night_a", "g_night_b")
+    night_t0 = 2 * 3600 + 11 * 60 + 4
+    add(Segment("19c_night", 26, still_frames(night, "MAR. 15 1996", night_t0, shake=0.0, seed=7), "cam",
+                [(0.0, "ding", 0.5), (0.4, "elev_doors", 0.7), (6.0, "K01", 1.0), (20.0, "knock_inside", 0.35)],
+                bed(0.014, 0.006, 0.01, "drone_low", 0.2, buzz_gate=gate_from_schedule(night, "g_night_a")),
+                glitches=[(0, 0.5, 1.0), (25.5, 0.5, 1.0)]))
     add(Segment("20_static", 1.2, static_frames(13), "clean", [(0, "static", 0.7)], damage=False))
     add(Segment("21_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr", 0.6)], bed(0.004), damage=False))
 
