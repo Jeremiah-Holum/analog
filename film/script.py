@@ -1,22 +1,22 @@
-"""Every spoken line in THE THIRD FLOOR. id -> (style, text)."""
+"""Every spoken line in THE THIRD FLOOR. id -> (style, text). A word ending in ~ is drawn out ("be~..." -> "beeee...")."""
 
 VO = {
     # TAPE 1 - security desk
     "D01": ("dale", "Testing... uh, okay. Okay."),
     "D02": ("dale", "Uh, this is Dale... Dale Kessler, night security at, uh, Brenner Mutual. It's November third... about two in the morning."),
     "D03": ("dale", "Mister Pruitt asked me to, um, get the lights on three on tape. For the electrician."),
-    "D04": ("dale", "So... let's go see the lights."),
+    "D04": ("dale", "So~... let's go see the lights."),
     # elevator / walk
     "E01": ("dale", "Third floor."),
     "E02": ("dale", "See? See, it's already doing it."),
     "W01": ("dale", "Every night, right around two, the whole... the whole floor starts doing this."),
-    "W02": ("dale", "Maintenance came out twice. They say the, uh, the ballasts are fine... the wiring's fine."),
+    "W02": ("dale", "Maintenance came out twice. They say the, uh~, the ballasts are fine... the wiring's fine."),
     "W03": ("dale_q", "It's not fine."),
-    "C00": ("dale", "Okay. Uh, doors. For the record."),
+    "C00": ("dale", "Okay~. Uh, doors. For the record."),
     # end of hall
-    "X01": ("dale", "And, uh... this one."),
+    "X01": ("dale", "And, uh~... this one."),
     "X02": ("dale", "This one isn't on the... on the floor plan. I checked the binder at the desk. Nine offices on three."),
-    "X03": ("dale", "This would be... ten."),
+    "X03": ("dale", "This would be~... ten."),
     "X04": ("dale_q", "...Hello?"),
     "X05": ("dale_q", "Building's closed. Is, is somebody in there?"),
     # TAPE 2
@@ -31,15 +31,15 @@ VO = {
     "P01": ("dale_q", "November ninth."),
     "P02": ("dale_q", "I, uh, I called Pruitt. About the... about the man. He asked me what number I got to."),
     "P03": ("dale_q", "I said fourteen. And he didn't... he didn't say anything for a long time."),
-    "P04": ("dale_q", "Then he said... don't go back up, Dale."),
+    "P04": ("dale_q", "Then he said~... don't go back up, Dale."),
     "P05": ("dale_q", "He wasn't in today. Nobody... nobody answers at his house."),
     "P06": ("dale_q", "And the camera on three has been showing that door open since, uh, since midnight."),
     "P07": ("dale_q", "It's my job. I have to... I have to go look."),
     # TAPE 4 - upstairs
     "G01": ("dale_q", "It's open."),
     "G02": ("dale_q", "It's, it's all the way open."),
-    "G03": ("dale_q", "Okay. Okay... I'm just... I'm just gonna look."),
-    "O01": ("dale_w", "There's a whole... office back here."),
+    "G03": ("dale_q", "Okay. Okay~... I'm just... I'm just gonna look."),
+    "O01": ("dale_w", "There's a whole~... office back here."),
     "O02": ("dale_w", "There's a... there's a TV on."),
     "V01": ("dale_w", "That's the hallway."),
     "V02": ("dale_w", "That's the door I just... I just came through. That's..."),

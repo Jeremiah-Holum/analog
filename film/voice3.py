@@ -49,6 +49,32 @@ def natural(path, text, style):
     return p, m
 
 
+def stretch_words(path, marked, asr, factor=1.9):
+    """Draw out the marked words ("be~" -> "beeee...") with a speech-quality time stretch of just that word."""
+    y, sr = librosa.load(path, sr=None)
+    segs = asr.transcribe(path, beam_size=3, word_timestamps=True)[0]
+    ws = [(re.sub(r"[^a-z']", "", w.word.lower()), w.start, w.end) for sg in segs for w in sg.words]
+    pieces, cur, i = [], 0, 0
+    for target in marked:
+        while i < len(ws) and ws[i][0] != target:
+            i += 1
+        if i == len(ws):
+            print(f"    (couldn't find '{target}' to stretch)", flush=True)
+            break
+        a, b = int(ws[i][1] * sr), int(ws[i][2] * sr)
+        tmp_in, tmp_out = path + ".w.wav", path + ".s.wav"
+        sf.write(tmp_in, y[a:b], sr)
+        subprocess.run(["sox", tmp_in, tmp_out, "tempo", "-s", f"{1 / factor:.3f}"], check=True, capture_output=True)
+        word, _ = librosa.load(tmp_out, sr=sr)
+        os.remove(tmp_in); os.remove(tmp_out)
+        fade = min(int(0.01 * sr), len(word) // 4)
+        word[:fade] *= np.linspace(0, 1, fade); word[-fade:] *= np.linspace(1, 0, fade)
+        pieces += [y[cur:a], word]
+        cur, i = b, i + 1
+    pieces.append(y[cur:])
+    sf.write(path, np.concatenate(pieces), sr)
+
+
 def finish(raw, key, style):
     """Camcorder-mic treatment, then level to the style's loudness."""
     tmp = os.path.join(RAW, key + "_fx.wav")
@@ -82,6 +108,8 @@ class Voicer:
         ta.save(path, wav, self.vc.sr)
 
     def line(self, key, style, text):
+        marked = [re.sub(r"[^a-z']", "", w.lower()) for w in text.split() if "~" in w]
+        text = text.replace("~", "")
         ref, ex, cfg, temp = DELIVERY[style]
         raw = os.path.join(RAW, key + ".wav")
         best = None
@@ -100,6 +128,8 @@ class Voicer:
                 break
         total, cand, heard, ts, pen = best
         os.replace(cand, raw)
+        if marked:
+            stretch_words(raw, marked, self.asr)
         for a in range(TRIES):
             p = os.path.join(RAW, f"{key}_try{a}.wav")
             if os.path.exists(p):
