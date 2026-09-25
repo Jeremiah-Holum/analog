@@ -163,7 +163,7 @@ def t2_figure(variant):
         sc = kit.reset(23); M = kit.Mats()
         L, fx, _ = hall14(M)
         lv = {"A": 0.5, "B": 0.0, "C": 0.5}[variant]
-        static_levels(fx, {9: lv, 6: 0.25, 5: 0.8})
+        static_levels(fx, {10: lv * 1.3, 9: 0.0, 6: 0.25, 5: 0.8})
         if variant in "AB":
             kit.figure((0.2, L - 3.0, 0), toward=(0.15, 24.2), head_tilt=0.2)
         cam = kit.camera()
@@ -174,7 +174,7 @@ def t2_figure(variant):
 
 def t2_turn():
     sc = kit.reset(24); M = kit.Mats()
-    modes = list(T2_MODES); modes[7] = "bad"
+    modes = list(T2_MODES); modes[6] = "bad"; modes[7] = "dead"
     L, fx, _ = kit.hallway(M, 14, modes=modes, tail=9.0, seed=5)
     n = SHOT_LEN["t2_turn"]; set_frames(sc, n)
     kit.figure((0.1, 21.7, 0), toward=(0.15, 24.2), reach=0.35, head_tilt=0.25)
@@ -184,7 +184,7 @@ def t2_turn():
     key_cam(cam, 17, (0.1, 24.3, 1.58), (0.1, 15, 1.7))
     key_cam(cam, n, (0.1, 24.35, 1.57), (0.1, 15, 1.65))
     kit.handheld(cam, 1.6)
-    animate_all(fx, n, {7: lambda f: 1.0 if f < 60 else None})
+    animate_all(fx, n, {6: lambda f: 1.0 if f < 60 else None})
     return ("anim", n)
 
 
@@ -196,7 +196,7 @@ CCTV_POS = {
 }
 
 
-def cctv(cam_id, open_angle=0.0, fig=None, office=False, lens=None, cam_override=None):
+def cctv(cam_id, open_angle=0.0, fig=None, office=False, lens=None, cam_override=None, levels=None):
     def build():
         sc = kit.reset(31); M = kit.Mats()
         L, fx, _ = kit.hallway(M, 9, end_open=open_angle, void=not office,
@@ -204,7 +204,7 @@ def cctv(cam_id, open_angle=0.0, fig=None, office=False, lens=None, cam_override
         kit.elevator(M)
         if office:
             kit.office(M, (0, L, 0))
-        static_levels(fx)
+        static_levels(fx, levels)
         pos, tgt = cam_override or CCTV_POS[cam_id]
         if fig:
             loc, kw = fig
@@ -362,12 +362,12 @@ def t4_floor(with_figure):
 CCTV_STILLS = {
     "cctv_N": cctv("N"),
     "cctv_N_ajar": cctv("N", 0.35),
-    "cctv_N_door": cctv("N", 1.3, ((0.0, -0.35), dict(head_tilt=0.2))),
-    "cctv_N_mid": cctv("N", 1.3, ((-0.3, 11.0), dict())),
-    "cctv_N_near": cctv("N", 1.3, ((0.35, 5.0), dict(reach=0.2))),
+    "cctv_N_door": cctv("N", 1.3, ((0.0, -0.35), dict(head_tilt=0.2)), levels={5: 0.0}),
+    "cctv_N_mid": cctv("N", 1.3, ((-0.3, 11.0), dict()), levels={3: 0.0}),
+    "cctv_N_near": cctv("N", 1.3, ((0.35, 5.0), dict(reach=0.2)), levels={1: 0.0}),
     "cctv_N_open": cctv("N", 1.3),
     "cctv_E": cctv("E"),
-    "cctv_E_face": cctv("E", 1.3, ((-0.35, 2.75), dict(head_tilt=-0.75))),
+    "cctv_E_face": cctv("E", 1.3, ((-0.7, 3.35), dict(head_tilt=0.6)), levels={0: 0.12, 1: 0.2}),
     "cctv_S": cctv("S"),
     "tv_feed_raw": cctv("F", 1.45, ((0.05, -0.25), dict(facing=0.0, toward=(0.05, 99))), office=True,
                         cam_override=((0.95, 14.0, 2.45), (0, 19.8, 1.1))),

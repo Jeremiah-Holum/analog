@@ -433,11 +433,11 @@ def figure(loc, height=2.25, facing=math.pi, reach=0.0, head_tilt=0.0, toward=No
         sv = me.skin_vertices[0].data[i]
         sv.radius = (rx * k, ry * k)
         sv.use_root = (i == 0)
-    body.data.materials.append(mat_flat("skin_dark", (0.014, 0.013, 0.013), 0.5))
+    body.data.materials.append(mat_flat("skin_dark", (0.014, 0.013, 0.013), 0.85))
     bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, -0.015 * k, 2.05 * k), segments=32, ring_count=16)
     head = bpy.context.object
     head.scale = (0.105 * k, 0.12 * k, 0.155 * k)
-    head.data.materials.append(mat_flat("skin_pale", (0.3, 0.285, 0.26), 0.45))
+    head.data.materials.append(mat_flat("skin_head", (0.02, 0.019, 0.018), 0.85))  # featureless: never show a face
     bpy.ops.object.shade_smooth()
     bpy.context.view_layer.update()
     for s in (-1, 1):  # sunken black eyes, parented to the head so they follow its tilt
