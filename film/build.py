@@ -397,11 +397,28 @@ def static_frames(seed=1):
 
 
 # ------------------------------------------------------------ beds
+def loop(name, n, rng, xfade=0.5):
+    """A real recorded bed, looped from a random start with crossfades so the seams don't show."""
+    x = clip(name)
+    f = min(int(xfade * SR), len(x) // 4)
+    out = x[int(rng.integers(0, max(1, len(x) - f))):].copy()
+    while len(out) < n:
+        k = min(f, len(out))
+        out[-k:] = out[-k:] * np.linspace(1, 0, k) + x[:k] * np.linspace(0, 1, k)
+        out = np.concatenate([out, x[k:]])
+    return out[:n]
+
+
 def bed(hiss_l=0.012, buzz_l=0.0, room_l=0.006, drone=None, drone_g=0.0, buzz_gate=None):
+    """Background: tape hiss + real VHS hum + real office ventilation, plus real fluorescent hum when lit."""
     def b(n, rng):
-        y = hiss(n, rng, hiss_l) + room(n, rng, room_l)
+        # gains calibrated from each recording's RMS: fluoro 0.008, room 0.106, vhs 0.066
+        y = hiss(n, rng, hiss_l * 0.6) + loop("bed_vhs", n, rng) * hiss_l * 6 + loop("bed_room", n, rng) * room_l * 11
         if buzz_l:
-            y += buzz(n, buzz_l, [buzz_gate] if buzz_gate else None)
+            hum = loop("bed_fluoro", n, rng) * buzz_l * 75
+            if buzz_gate:
+                hum *= buzz_gate(np.arange(n) / SR)
+            y += hum
         if drone:
             x = clip(drone)
             reps = int(np.ceil(n / len(x)))
@@ -607,7 +624,7 @@ def film():
                 [(5.8, "step_heavy", 0.4), (7.2, "step_heavy", 0.6), (8.6, "step_heavy", 0.8),
                  (9.4, "stinger", 0.5), (16.2, "drag", 0.9), (21.0, "knock_final", 1.0)],
                 bed(0.012, 0.0, 0.01, "drone_low", 0.3), glitches=[(9.4, 0.15, 0.5), (19.4, 0.2, 0.7), (24.0, 0.5, 1.0)]))
-    add(Segment("47_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr", 0.6)], bed(0.004), damage=False))
+    add(Segment("47_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr_eject", 0.6)], bed(0.004), damage=False))
     add(Segment("48_static", 0.5, static_frames(7), "clean", [(0, "static", 0.4)], damage=False))
 
     # ---- epilogue
@@ -685,7 +702,7 @@ def main():
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", joined], check=True)
     final = os.path.join(OUT, project.FINAL)
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", joined, "-c:v", "libx264", "-preset", "slow", "-crf", "21",
-                    "-af", "loudnorm=I=-18:TP=-1.5:LRA=14", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", final],
+                    "-af", "loudnorm=I=-14:TP=-1.0:LRA=11", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", final],
                    check=True)
     print("wrote", final)
 

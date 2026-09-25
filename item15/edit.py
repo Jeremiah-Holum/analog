@@ -83,7 +83,7 @@ def film():
                 [(0.0, "drop", 0.35), (0.4, "Z01", 1.0), (3.6, "Z02", 1.0), (13.2, "Z03", 1.0)],
                 hall, glitches=[(0, 0.4, 0.9)]))
     add(Segment("19_close", SHOT_LEN["g_close"] / FPS, seq("g_close", 206), "cam",
-                [(0.9, "elev_doors", 0.8), (1.35, "stinger_big", 0.9)], hall, glitches=[(3.6, 0.4, 1.0)]))
+                [(0.5, "button", 0.6), (0.9, "elev_doors", 0.8), (1.35, "stinger_big", 0.9)], hall, glitches=[(3.6, 0.4, 1.0)]))
     # the tape keeps running
     add(Segment("19b_dark", 3.0, lambda i, t: B.Image.new("RGB", (B.W, B.H)), "cam", [], bed(0.014, 0.0, 0.012)))
     night = flicker(211, 0.35, "g_night_a", "g_night_b")
@@ -93,7 +93,7 @@ def film():
                 bed(0.014, 0.006, 0.01, "drone_low", 0.2, buzz_gate=gate_from_schedule(night, "g_night_a")),
                 glitches=[(0, 0.5, 1.0), (25.5, 0.5, 1.0)]))
     add(Segment("20_static", 1.2, static_frames(13), "clean", [(0, "static", 0.7)], damage=False))
-    add(Segment("21_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr", 0.6)], bed(0.004), damage=False))
+    add(Segment("21_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr_eject", 0.6)], bed(0.004), damage=False))
 
     def end_card(name, lines, dur):
         return Segment(name, dur, card_frames(lines, 21, typed=False, align="center", fade=1.0, dur=dur, fontpath=SERIF),
