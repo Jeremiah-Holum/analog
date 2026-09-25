@@ -53,20 +53,25 @@ VO = {
     "M07": ("memo", "Do not look at the end of the hall for longer than necessary."),
 }
 
-NUMBER_WORDS = {1: "oh one", 2: "oh two", 3: "oh three", 4: "oh four", 5: "oh five", 6: "oh six", 7: "oh seven",
-                8: "oh eight", 9: "oh nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen"}
-for i, w in NUMBER_WORDS.items():
-    VO[f"N{i:02d}"] = ("dale" if i < 10 else "dale_q", f"Three {w}.")
-VO["N10"] = ("dale_q", "Three... ten.")
-VO["N13"] = ("dale_q", "Three... three thirteen.")
+# Door counts: one continuous take per tape, cut into one clip per number (A01.., B01..).
+# (style, clip prefix, door numbers, text)
+COUNTS = {
+    "COUNT1": ("dale", "A", list(range(301, 310)),
+               "Three oh one… three oh two… three oh three… three oh four… three oh five… "
+               "three oh six… three oh seven… three oh eight… three oh nine."),
+    "COUNT2": ("dale_q", "B", list(range(301, 315)),
+               "Three oh one… three oh two… three oh three… three oh four… three oh five… "
+               "three oh six… three oh seven… three oh eight… three oh nine… three ten… "
+               "three eleven… three twelve… three thirteen… three fourteen."),
+}
 
 # Chatterbox delivery per style: (reference voice, exaggeration, cfg_weight, temperature)
-DELIVERY = {
-    "dale":      ("dale_calm", 0.5, 0.5, 0.8),
-    "dale_q":    ("dale_scared", 0.6, 0.45, 0.85),
-    "dale_w":    ("dale_scared", 0.7, 0.35, 0.85),
-    "dale_yell": ("dale_yell", 1.0, 0.3, 0.9),
+DELIVERY = {  # one reference for all of Dale, emotion kept low so voice and accent stay put
+    "dale":      ("dale", 0.4, 0.5, 0.75),
+    "dale_q":    ("dale", 0.45, 0.5, 0.75),
+    "dale_w":    ("dale", 0.45, 0.5, 0.75),
+    "dale_yell": ("dale_yell", 0.9, 0.35, 0.85),   # real shout, then voice-converted into Dale
     "memo":      ("memo", 0.3, 0.6, 0.6),
 }
-# per-line overrides of exaggeration
-EXAGGERATE = {"F02": 1.2, "F01": 0.8, "W03": 0.7, "X05": 0.75, "V02": 0.9, "S04": 0.8}
+# loudness each style is levelled to (LUFS)
+LOUDNESS = {"dale": -20, "dale_q": -21, "dale_w": -24, "dale_yell": -15, "memo": -20}

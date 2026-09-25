@@ -437,7 +437,7 @@ def film():
     hold = 2.6
     t1 = count_walk(T1_COUNT["n"], T1_COUNT["y0"], T1_COUNT["speed"])
     add(Segment("14_count", hold + T1_COUNT["dur"], seq_frames("t1_count", date1, 8200, hold_first=hold), "cam",
-                [(0.3, "C00", 1.0)] + [(hold + tt - 0.25, f"N{k + 1:02d}", 1.0) for k, tt in enumerate(t1)]
+                [(0.3, "C00", 1.0)] + [(hold + tt - 0.25, f"A{k + 1:02d}", 1.0) for k, tt in enumerate(t1)]
                 + steps(hold, hold + t1[-1] + 0.5, 1.7) + steps(hold + t1[-1] + 0.6, hold + T1_COUNT["dur"] - 0.8, 1.2, gain=0.25),
                 bed(0.012, 0.02), glitches=glitch_in))
     end_s = flicker(14, 0.35, "t1_end_lit", "t1_end_dim", quiet=[(12.0, 19.5)])
@@ -457,7 +457,7 @@ def film():
                 bed(0.012, 0.018, buzz_gate=gate_from_schedule(s2, "t2_start_a")), glitches=[(0, 0.4, 1.0)]))
     t2 = count_walk(T2_COUNT["n"], T2_COUNT["y0"], T2_COUNT["speed"])
     add(Segment("22_count", T2_COUNT["dur"], seq_frames("t2_count", date2, 7785), "cam",
-                [(tt - 0.25, f"N{k + 1:02d}", 1.0) for k, tt in enumerate(t2)] + [(32.0, "S04", 1.0)]
+                [(tt - 0.25, f"B{k + 1:02d}", 1.0) for k, tt in enumerate(t2)] + [(32.0, "S04", 1.0)]
                 + steps(0, t2[-1] + 0.5, 1.75) + steps(t2[-1] + 0.6, 34.5, 1.1, gain=0.22),
                 bed(0.012, 0.016, drone="drone_low", drone_g=0.0), glitches=glitch_in))
 
