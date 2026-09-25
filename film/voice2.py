@@ -18,7 +18,8 @@ TRIES = 5
 
 def words(s):
     s = re.sub(r"\d+", lambda m: " " + num2words(int(m.group())) + " ", s.lower().replace("'", ""))
-    return re.sub(r"[^a-z ]", " ", s).split()
+    w = [x for x in re.sub(r"[^a-z ]", " ", s).split() if x not in ("uh", "um", "er")]
+    return [x for i, x in enumerate(w) if i == 0 or x != w[i - 1]]   # stutters: "I, I" == "I"
 
 
 def score(expected, heard, key):
