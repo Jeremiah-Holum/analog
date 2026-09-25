@@ -258,7 +258,7 @@ class Segment:
 
 
 # ------------------------------------------------------------ frame builders
-def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, play_for=3.0, bright=1.0):
+def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, play_for=3.0, bright=1.0, zoom=None):
     d = os.path.join(OUT, "frames", shot)
     n = SHOT_LEN[shot]
 
@@ -268,6 +268,8 @@ def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, pl
         if t < hold_first:
             dx, dy = handheld(t, 0.8, 3)
             img = to_screen(img, dx, dy)
+        elif zoom:
+            img = to_screen(img, 0, 0, *zoom(t))
         else:
             img = to_screen(img)
         img = brightness(img, bright)
@@ -550,20 +552,23 @@ def film():
     add(Segment("43_enter", SHOT_LEN["t4_enter"] / FPS, seq_frames("t4_enter", date4, 8485, bright=1.25), "cam",
                 [(7.0, "O01", 1.0), (12.0, "O02", 1.0), (0, "breath", 0.2)] + steps(0, 13.5, 1.3, gain=0.25),
                 bed(0.012, 0.012, 0.01, "drone_low", 0.25), glitches=glitch_in))
+    def turn_zoom(t):  # he zooms in on the doorway, then drops the camera
+        u = min(1, max(0, (t - 0.8) / 0.5)) if t < 2.3 else max(0, 1 - (t - 2.3) / 0.15)
+        return (1 + 1.2 * u, 192 + (186 - 192) * u, 144 + (132 - 144) * u)
     tv_s = lambda t: ("t4_tv_feed", 1.0) if t < 6.9 else ("t4_tv_static", 1.0)
     add(Segment("44_tv", 7.4, still_frames(tv_s, date4, 8501, shake=0.9, seed=9), "cam",
                 [(1.2, "V01", 1.0), (3.6, "V02", 1.0), (0, "breath", 0.2)], bed(0.012, 0.0, 0.01, "drone_low", 0.35)))
-    add(Segment("45_turn", SHOT_LEN["t4_turn"] / FPS, seq_frames("t4_turn", date4, 8508, bright=1.4), "cam",
+    add(Segment("45_turn", SHOT_LEN["t4_turn"] / FPS, seq_frames("t4_turn", date4, 8508, bright=1.4, zoom=turn_zoom), "cam",
                 [(0.55, "stinger_big", 1.0), (2.45, "drop", 1.0)], bed(0.012, 0.0, 0.01),
                 glitches=[(0.4, 0.3, 0.6), (2.4, 0.6, 1.0)]))
 
-    def floor_s(t):
+    def floor_s(t):  # camera lying on the floor
         if t < 9.5:
-            return ("t4_floor_1", 1.5)
+            return ("t4_floor_1", 2.0)
         if t < 19.5:
-            return ("t4_floor_2", 1.5)
-        return ("t4_floor_1", 0.6)
-    add(Segment("46_floor", 24.5, still_frames(floor_s, date4, 8512, shake=0.0, seed=10), "cam",
+            return ("t4_floor_2", 2.0)
+        return ("t4_floor_1", 0.8)
+    add(Segment("46_floor", 24.5, still_frames(floor_s, date4, 8512, shake=0.0, seed=10, zoom=lambda t: (1.3, 240, 150)), "cam",
                 [(0, "breath_fast", 0.35), (5.8, "step_heavy", 0.4), (7.2, "step_heavy", 0.6), (8.6, "step_heavy", 0.8),
                  (9.4, "stinger", 0.5), (16.2, "drag", 0.9), (21.0, "knock_final", 1.0)],
                 bed(0.012, 0.0, 0.01, "drone_low", 0.3), glitches=[(9.4, 0.15, 0.5), (19.4, 0.2, 0.7), (24.0, 0.5, 1.0)]))
