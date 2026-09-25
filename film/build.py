@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from timing import FPS, T1_COUNT, T2_COUNT, SHOT_LEN, count_walk
 import sfx
+from script import VO
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "out")
@@ -220,8 +221,15 @@ class Segment:
         n = int(round(self.dur * SR))
         rng = np.random.default_rng(abs(hash(self.name)) % 2 ** 32)
         y = self.bed(n, rng) if self.bed else np.zeros(n)
-        for t, name, g in self.cues:
+        vo_end = -1.0
+        for t, name, g in sorted(self.cues, key=lambda c: c[0]):
             x = clip(name)
+            if name in VO:  # never let one spoken line talk over the previous one
+                if t < vo_end + 0.25:
+                    t = vo_end + 0.25
+                vo_end = t + len(x) / SR - 0.3
+                if vo_end > self.dur:
+                    print(f"    ! {self.name}: line {name} runs {vo_end - self.dur:.1f}s past the cut")
             i = max(0, int(t * SR))
             if i >= n:
                 continue
