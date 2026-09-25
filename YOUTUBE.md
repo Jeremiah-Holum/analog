@@ -2,7 +2,7 @@
 
 - **Video:** `renders/the_third_floor_youtube.mp4`. Upload this one, not `renders/the_third_floor.mp4`
   (that's the small phone copy). It's 1440×1080, 4:3. YouTube shows it pillarboxed, which suits the VHS look.
-- **Thumbnail:** `renders/thumbnail.png` (1280×720)
+- **Thumbnail:** `renders/thumbnails/F_floor_dark_upright.png` (others in `renders/thumbnails/`)
 
 ## Title
 
@@ -10,7 +10,42 @@
 
 Alternatives: *"Do not count the doors."* · *The Brenner Mutual Tapes* · *THE THIRD FLOOR [ANALOG HORROR]*
 
-## Description
+## Channel
+
+- **Name:** VHS-C 14 (handle: @vhsc14)
+- **Icon:** `renders/channel/icon_A_14.png` (options B and C in the same folder)
+
+## Description (cryptic version, recommended)
+
+```
+COULEE COUNTY SHERIFF'S DEPARTMENT
+EVIDENCE 14-A THROUGH 14-D
+
+Four (4) VHS-C cassettes recovered from the security desk of the
+Brenner Mutual Insurance building, November 11, 1994.
+
+Nothing has been removed.
+
+there are nine offices on the third floor.
+
+00:00 ▮
+00:30 14-A
+02:30 14-B
+03:46 14-C
+04:29 71-117
+05:14 14-D
+07:03 ▮
+
+—
+
+This is a work of fiction. Voices are synthetic (AI text-to-speech).
+Voice: LibriTTS-R (Koizumi et al., 2023), CC BY 4.0, from LibriVox recordings.
+Shout: RAVDESS (Livingstone & Russo, 2018), CC BY-NC-SA 4.0.
+
+#analoghorror #foundfootage #vhs
+```
+
+## Description (plain version)
 
 ```
 In November 1994, night security officer Dale Kessler disappeared from the Brenner Mutual
