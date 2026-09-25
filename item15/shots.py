@@ -5,6 +5,7 @@ import bpy
 import kit
 import shots as s1                     # Film 1's shots: count walk, desk, office props, helpers
 from kit import key_cam, look
+kit.REALISM = True
 from timing import FPS, count_walk
 
 ROOT = s1.ROOT
@@ -16,7 +17,9 @@ from item15.timing import GARY_COUNT, SHOT_LEN
 def hall12(M, modes=None, **kw):
     """The third floor as Gary finds it: twelve doors, lights working (it's daytime)."""
     modes = modes or ["ok", "ok", "ok", "bad", "ok", "ok", "ok", "bad", "dying", "dying"]
-    return kit.hallway(M, 12, modes=modes, tail=5.0, seed=9, **kw)
+    L, fx, end = kit.hallway(M, 12, modes=modes, tail=5.0, seed=9, **kw)
+    kit.clutter_hall(M, L, seed=15)
+    return L, fx, end
 
 
 def daylight(fixtures):
@@ -35,6 +38,11 @@ def lobby():
             for n in m.node_tree.nodes:
                 if n.type == 'EMISSION':
                     n.inputs["Strength"].default_value = 6.0
+    M = kit.Mats()
+    card, tape = kit.mat_cardboard(), kit.mat_flat("packtape", (0.55, 0.45, 0.3), 0.35)
+    kit.carton((1.55, 0.2, 0), (0.5, 0.4, 0.38), 0.3, card, tape)
+    kit.carton((1.5, 0.25, 0.38), (0.42, 0.36, 0.3), -0.2, card, tape)
+    kit.papers(4, (-1.5, 1.5), (-0.5, 0.5), M)
     look(bpy.context.scene.camera, (0.45, -1.15, 1.6), (-0.15, 1.2, 0.95))
     return ("still",)
 
@@ -74,6 +82,7 @@ def open_on(floor):
         cam = kit.camera()
         if floor == 2:
             kit.office(M, (0, 0.0, 0))
+            kit.clutter_office(M, (0, 0.0, 0), seed=12)
             fx = []
             for x in (-2.0, 0.0, 2.0):
                 for y in (1.5, 4.0, 6.5, 8.6):
@@ -136,6 +145,7 @@ def g_count():
 def hall_office12(M):
     L, fx, end = hall12(M, end_open=1.45, void=False)
     kit.office(M, (0, L, 0))
+    kit.clutter_office(M, (0, L, 0), seed=16)
     return L, fx
 
 

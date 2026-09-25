@@ -3,6 +3,7 @@ import bpy, math, random
 from mathutils import Vector
 
 RES = (384, 288)
+REALISM = False   # ITEM 15+: motion blur, mismatched fluorescent tubes, clutter
 FPS = 24
 HALL_W = 2.2          # corridor width (x: -1.1 .. 1.1)
 HALL_H = 2.6
@@ -30,6 +31,9 @@ def reset(seed=1):
     sc.render.resolution_x, sc.render.resolution_y = RES
     sc.render.fps = FPS
     sc.render.use_persistent_data = True
+    if REALISM:
+        sc.render.use_motion_blur = True
+        sc.render.motion_blur_shutter = 0.5
     sc.view_settings.view_transform = 'Filmic'
     sc.view_settings.look = 'Medium High Contrast'
     sc.world = bpy.data.worlds.new("w")
@@ -285,6 +289,11 @@ class Fixture:
         d.shape = 'RECTANGLE'
         d.size, d.size_y = 0.55, 1.15
         d.color = (0.9, 1.0, 0.88)
+        if REALISM:  # real tubes never match: some greener, some warmer, some tired
+            g = random.random()
+            d.color = (0.86 + 0.08 * g, 1.0, 0.8 + 0.12 * random.random())
+            power *= random.uniform(0.75, 1.1)
+            self.emit.inputs["Color"].default_value = (*d.color, 1)
         d.energy = power
         self.light = d
         o = bpy.data.objects.new("fl", d)
@@ -610,3 +619,81 @@ def linear_keys(obj):
         for fc in obj.animation_data.action.fcurves:
             for kp in fc.keyframe_points:
                 kp.interpolation = 'BEZIER'
+
+
+# ---------------------------------------------------------------- clutter (an empty building still has stuff in it)
+def mat_cardboard():
+    m, nt, b = _mat("cardboard")
+    v = _coords(nt)
+    col = _ramp_mix(nt, _noise(nt, v, 6, 4, 0.5), (0.32, 0.22, 0.12), (0.45, 0.32, 0.18), 0.3, 0.7)
+    nt.links.new(col, b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.85
+    return m
+
+
+def carton(loc, size, rot_z, card, tape):
+    x, y, z = loc
+    box("carton", (x, y, z + size[2] / 2), size, card, rot=(0, 0, rot_z))
+    box("tape", (x, y, z + size[2] + 0.001), (size[0] * 0.25, size[1] * 1.01, 0.003), tape, rot=(0, 0, rot_z))
+
+
+def chair(loc, rot_z, M, tipped=False):
+    bpy.ops.object.empty_add(location=loc)
+    root = bpy.context.object
+    parts = [box("seat", (0, 0, 0.48), (0.46, 0.46, 0.07), M.grey), box("back", (0, 0.22, 0.8), (0.44, 0.05, 0.5), M.grey),
+             cyl("post", (0, 0, 0.26), 0.025, 0.44, M.steel)]
+    for k in range(5):
+        a = k * 2 * math.pi / 5
+        parts.append(box("leg", (0.16 * math.cos(a), 0.16 * math.sin(a), 0.04), (0.32, 0.04, 0.03), M.steel, rot=(0, 0, a)))
+    for o in parts:
+        o.parent = root
+    root.rotation_euler = (math.pi / 2 if tipped else 0, 0, rot_z)
+    if tipped:
+        root.location.z = 0.24
+    return root
+
+
+def papers(n, x_range, y_range, M, z=0.002):
+    for _ in range(n):
+        box("paper", (random.uniform(*x_range), random.uniform(*y_range), z), (0.21, 0.29, 0.002), M.paper,
+            rot=(0, 0, random.uniform(0, math.pi)))
+
+
+def clutter_hall(M, L, seed=0):
+    """Boxes, papers, a chair, a vacuum, a FOR LEASE sign, a cord, a missing ceiling tile."""
+    random.seed(seed)
+    W = HALL_W
+    card, tape = mat_cardboard(), mat_flat("packtape", (0.55, 0.45, 0.3), 0.35)
+    for k in range(3):                          # boxes stacked against the walls between doors
+        side = -1 if k % 2 == 0 else 1
+        y = 4.9 + k * 4.8 if side < 0 else 6.5 + k * 4.8
+        x = side * (W / 2 - 0.28)
+        carton((x, y, 0), (0.5, 0.4, 0.38), random.uniform(-0.2, 0.2), card, tape)
+        if k != 1:
+            carton((x + random.uniform(-0.05, 0.05), y + 0.05, 0.38), (0.42, 0.36, 0.32), random.uniform(-0.4, 0.4), card, tape)
+    papers(10, (-W / 2 + 0.2, W / 2 - 0.2), (2.0, L - 3), M)
+    chair((0.55, 9.2, 0), 2.4, M)
+    vac = mat_flat("vacuum", (0.35, 0.05, 0.05), 0.4)
+    box("vac_body", (-W / 2 + 0.22, 12.4, 0.2), (0.25, 0.3, 0.4), vac)
+    cyl("vac_handle", (-W / 2 + 0.12, 12.4, 0.75), 0.015, 0.9, M.steel, rot=(0, -0.15, 0))
+    cyl("cord", (0.2 - W / 2 + 0.3, 13.6, 0.01), 0.006, 2.4, M.black, rot=(math.pi / 2, 0, 0.12))
+    sign = mat_flat("sign", (0.85, 0.83, 0.78), 0.6)
+    red = mat_flat("signred", (0.6, 0.03, 0.03), 0.5)
+    box("sign_board", (-W / 2 + 0.06, 1.35, 0.55), (0.03, 0.9, 0.6), sign, rot=(0, -0.12, 0))
+    text("FOR LEASE", (-W / 2 + 0.09, 1.35, 0.68), (math.pi / 2 - 0.12, 0, math.pi / 2), 0.12, red)
+    text("555-0141", (-W / 2 + 0.09, 1.35, 0.46), (math.pi / 2 - 0.12, 0, math.pi / 2), 0.08, red)
+    box("hole", (0.3, 14.6, HALL_H + 0.002), (0.6, 1.2, 0.01), M.black)            # a missing ceiling tile
+    box("tile", (0.3, 14.2, HALL_H - 0.08), (0.6, 0.6, 0.02), mat_ceiling(), rot=(0.35, 0.1, 0))  # hanging down
+
+
+def clutter_office(M, origin, seed=0):
+    random.seed(seed)
+    ox, oy, _ = origin
+    card, tape = mat_cardboard(), mat_flat("packtape", (0.55, 0.45, 0.3), 0.35)
+    for k, (x, y) in enumerate(((-3.3, 1.2), (-3.2, 1.8), (3.3, 8.2), (0.2, 8.4), (-0.4, 5.6))):
+        carton((ox + x, oy + y, 0), (0.5, 0.4, 0.38), random.uniform(-0.5, 0.5), card, tape)
+        if k % 2 == 0:
+            carton((ox + x, oy + y, 0.38), (0.44, 0.36, 0.3), random.uniform(-0.5, 0.5), card, tape)
+    papers(14, (ox - 3.5, ox + 3.5), (oy + 0.8, oy + 8.5), M)
+    chair((ox + 0.9, oy + 3.3, 0), 0.7, M, tipped=True)
+    chair((ox - 1.1, oy + 6.0, 0), -1.9, M)
