@@ -115,7 +115,7 @@ class Voicer:
         best = None
         for attempt in range(TRIES):
             cand = os.path.join(RAW, f"{key}_try{attempt}.wav")
-            self.take(text, ref, ex, cfg, temp, 1000 * attempt + 17, cand)
+            self.take(text, ref, ex, cfg, temp, 1000 * attempt + 17 + int(os.environ.get("VSEED", 0)), cand)
             if style == "dale_yell":
                 self.to_dale(cand)
             heard = self.heard(cand)
