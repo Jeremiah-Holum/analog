@@ -70,7 +70,7 @@ def film():
     add(Segment("15_enter", SHOT_LEN["g_enter"] / FPS, seq("g_enter", 112, bright=1.2), "cam",
                 [(5.0, "O01", 1.0)] + steps(0, 10.5, 1.5), bed(0.012, 0.008, 0.01, "drone_low", 0.12)))
     add(Segment("16_tv", 6, still("g_tv", 124, 0.9, 4), "cam", [(1.0, "O02", 1.0)],
-                bed(0.012, 0.0, 0.01, "drone_low", 0.18)))
+                bed(0.012, 0.0, 0.01, "drone_low", 0.18), af=[0.9]))
     add(Segment("17_turn", SHOT_LEN["g_turn"] / FPS, seq("g_turn", 130, bright=1.2), "cam",
                 [(2.2, "O03", 1.0), (4.2, "O04", 1.0)], bed(0.012, 0.006, 0.01)))
     # walking back
