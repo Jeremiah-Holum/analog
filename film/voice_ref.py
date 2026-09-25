@@ -1,4 +1,9 @@
-"""Reference voices for Chatterbox. Run with the Kokoro venv:
+"""Reference voices for Chatterbox.
+
+Current Dale voice (voice3.py): out/tts_ref/dale.wav = ~20 s of LibriTTS-R test-clean speaker 8455
+(public-domain LibriVox narration, via huggingface mythicinfinity/libritts_r), chosen by ear.
+The RAVDESS yell reference below is only used for the one shouted line, which is then voice-converted to Dale.
+ Run with the Kokoro venv:
 /home/user/tts/kk/bin/python film/voice_ref.py  (model files in /home/user/tts)
 
 Dale's references are real acted speech from one actor (RAVDESS, Actor 21, CC BY-NC-SA 4.0,
