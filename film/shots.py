@@ -332,8 +332,8 @@ def t4_turn():
     cam = kit.camera()
     key_cam(cam, 1, (1.85, L + 5.85, 1.22), (2.0, L + 6.64, 1.0))
     key_cam(cam, 8, (1.83, L + 5.85, 1.22), (1.9, L + 6.64, 1.05))
-    key_cam(cam, 22, (1.75, L + 5.8, 1.3), (0.3, L + 1.6, 1.85))
-    key_cam(cam, 52, (1.72, L + 5.78, 1.28), (0.3, L + 1.6, 1.8))
+    key_cam(cam, 22, (1.75, L + 5.8, 1.3), (0.3, L + 1.6, 2.1))
+    key_cam(cam, 52, (1.72, L + 5.78, 1.28), (0.3, L + 1.6, 2.05))
     p, t = FLOOR_CAM(L)
     key_cam(cam, 62, (1.4, L + 5.65, 0.6), (0.2, L + 1.5, 0.6), roll=1.0)
     key_cam(cam, 68, p, t, roll=math.pi / 2)
@@ -362,14 +362,14 @@ def t4_floor(with_figure):
 CCTV_STILLS = {
     "cctv_N": cctv("N"),
     "cctv_N_ajar": cctv("N", 0.35),
-    "cctv_N_door": cctv("N", 1.3, ((0.0, -0.35), dict(head_tilt=0.2)), levels={5: 0.0}),
+    "cctv_N_door": cctv("N", 1.3, ((0.0, -0.8), dict(head_tilt=0.2)), levels={5: 0.0}),
     "cctv_N_mid": cctv("N", 1.3, ((-0.3, 11.0), dict()), levels={3: 0.0}),
     "cctv_N_near": cctv("N", 1.3, ((0.35, 5.0), dict(reach=0.2)), levels={1: 0.0}),
     "cctv_N_open": cctv("N", 1.3),
     "cctv_E": cctv("E"),
-    "cctv_E_face": cctv("E", 1.3, ((-0.7, 3.35), dict(head_tilt=0.6)), levels={0: 0.12, 1: 0.2}),
+    "cctv_E_face": cctv("E", 1.3, ((-0.25, 2.55), dict(head_tilt=0.3)), levels={0: 0.12, 1: 0.2}),
     "cctv_S": cctv("S"),
-    "tv_feed_raw": cctv("F", 1.45, ((0.05, -0.25), dict(facing=0.0, toward=(0.05, 99))), office=True,
+    "tv_feed_raw": cctv("F", 1.45, ((0.05, -0.8), dict(facing=0.0, toward=(0.05, 99))), office=True,
                         cam_override=((0.95, 14.0, 2.45), (0, 19.8, 1.1))),
 }
 STILLS = {

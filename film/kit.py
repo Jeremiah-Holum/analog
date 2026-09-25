@@ -403,11 +403,18 @@ def elevator(M):
     return dl, dr
 
 
-def figure(loc, height=2.25, facing=math.pi, reach=0.0, head_tilt=0.0, toward=None):
+def figure(loc, height=3.17, facing=math.pi, reach=0.0, head_tilt=0.0, toward=None, stoop=0.42):
     """Tall, gaunt, hunched humanoid (skin-modifier skeleton + subsurf + lumpy displacement) with a
-    featureless head and long fingers. facing = z-rotation (pi faces -y). reach 0..1 lifts the arms forward."""
+    featureless head and long fingers. facing = z-rotation (pi faces -y). reach 0..1 lifts the arms forward.
+    It is ~3 m tall, so it stoops (radians, folding forward at the waist) to fit under a 2.6 m ceiling."""
     k = height / 2.25
     V, E, R = [], [], []
+
+    def bend(p):  # fold the upper body forward about the waist
+        py, pz = 0.015, 1.2
+        x, y, z = p
+        dy, dz = y - py, z - pz
+        return (x, py + dy * math.cos(stoop) - dz * math.sin(stoop), pz + dy * math.sin(stoop) + dz * math.cos(stoop))
 
     def v(p, r, parent=None):
         V.append(p); R.append(r if isinstance(r, tuple) else (r, r))
@@ -418,22 +425,22 @@ def figure(loc, height=2.25, facing=math.pi, reach=0.0, head_tilt=0.0, toward=No
     # spine, hunched forward at the shoulders
     pel = v((0, 0.0, 1.03), (0.15, 0.1))
     lum = v((0, 0.015, 1.2), (0.115, 0.085), pel)
-    rib_lo = v((0, 0.0, 1.38), (0.16, 0.11), lum)
-    rib_hi = v((0, -0.02, 1.56), (0.18, 0.12), rib_lo)
-    back = v((0, 0.045, 1.69), (0.14, 0.125), rib_hi)
-    neck0 = v((0, -0.09, 1.76), 0.048, back)
-    neck1 = v((0, -0.19, 1.8), 0.04, neck0)
+    rib_lo = v(bend((0, 0.0, 1.38)), (0.16, 0.11), lum)
+    rib_hi = v(bend((0, -0.02, 1.56)), (0.18, 0.12), rib_lo)
+    back = v(bend((0, 0.045, 1.69)), (0.14, 0.125), rib_hi)
+    neck0 = v(bend((0, -0.09, 1.76)), 0.048, back)
+    neck1 = v(bend((0, -0.19, 1.8)), 0.04, neck0)
     a = -1.25 * reach
     for sx in (-1, 1):
         drop = 0.06 if sx < 0 else 0.0          # one shoulder hangs lower
-        clav = v((sx * 0.17, -0.03, 1.73 - drop * 0.5), 0.055, back)
-        sh = v((sx * 0.25, -0.04, 1.68 - drop), 0.062, clav)
+        clav = v(bend((sx * 0.17, -0.03, 1.73 - drop * 0.5)), 0.055, back)
+        sh = v(bend((sx * 0.25, -0.04, 1.68 - drop)), 0.062, clav)
 
-        def arm(p):  # swing the arm forward about the shoulder
+        def arm(p, sy=-0.04, sz=1.68 - drop):  # hang from the (bent) shoulder, swung forward by reach
             x, y, z = p
-            sy, sz = -0.04, 1.68 - drop
             dy, dz = y - sy, z - sz
-            return (x, sy + dy * math.cos(a) - dz * math.sin(a), sz + dy * math.sin(a) + dz * math.cos(a))
+            bx, by, bz = bend((0, sy, sz))
+            return (x, by + dy * math.cos(a) - dz * math.sin(a), bz + dy * math.sin(a) + dz * math.cos(a))
         z = lambda h: h - drop
         up = v(arm((sx * 0.28, -0.05, z(1.46))), 0.046, sh)
         el = v(arm((sx * 0.29, -0.07, z(1.2))), 0.032, up)
@@ -468,10 +475,11 @@ def figure(loc, height=2.25, facing=math.pi, reach=0.0, head_tilt=0.0, toward=No
         sv.use_root = (i == pel)
     body.data.materials.append(mat_flat("skin_dark", (0.014, 0.013, 0.013), 0.85))
     # featureless head hanging forward off the neck
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0.02 * k, -0.28 * k, 1.86 * k), segments=32, ring_count=16)
+    hx, hy, hz = bend((0.02, -0.28, 1.86))
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(hx * k, hy * k, hz * k), segments=32, ring_count=16)
     head = bpy.context.object
     head.scale = (0.1 * k, 0.12 * k, 0.155 * k)
-    head.rotation_euler = (0.55 + head_tilt, 0.35, 0)   # drooping, cocked to one side
+    head.rotation_euler = (0.55 + stoop + head_tilt, 0.35, 0)   # drooping, cocked to one side
     head.data.materials.append(mat_flat("skin_head", (0.02, 0.019, 0.018), 0.85))
     hd = head.modifiers.new("lumps", 'DISPLACE'); hd.texture = tex; hd.strength = 0.05; hd.mid_level = 0.5
     bpy.ops.object.shade_smooth()
