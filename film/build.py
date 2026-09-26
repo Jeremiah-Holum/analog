@@ -428,10 +428,14 @@ def bed(hiss_l=0.012, buzz_l=0.0, room_l=0.006, drone=None, drone_g=0.0, buzz_ga
 
 
 def gate_from_schedule(schedule, lit_name):
+    """Fluorescent hum follows the lights: full while a lit image is on screen, nearly off while dark.
+    lit_name can be one still name or a tuple of them."""
+    lit = set(lit_name) if isinstance(lit_name, (tuple, list, set)) else {lit_name}
+
     def g(tt):
         out = np.ones_like(tt)
         for k in range(0, len(tt), SR // 50):
-            out[k:k + SR // 50] = 1.0 if schedule(tt[k])[0] == lit_name else 0.15
+            out[k:k + SR // 50] = 1.0 if schedule(tt[k])[0] in lit else 0.15
         return out
     return g
 

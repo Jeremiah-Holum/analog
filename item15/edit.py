@@ -79,11 +79,19 @@ def film():
                 [(0.4, "B01", 1.0), (3.0, "B02", 1.0), (10.5, "B03", 1.0)] + steps(0, 15, 1.6),
                 bed(0.012, 0.014, 0.006, buzz_gate=gate_from_schedule(back, "g_back_lit")), glitches=cut_in))
     # sign-off at the elevator
-    add(Segment("18_hold", 16, still("g_hold", 190, 0.0, 5), "cam",
+    def hold_s(t):   # the broken light flickers out; when it comes back, something is standing under it
+        if 4.6 <= t < 6.8:
+            return ("g_hold_dark", 1.0) if int(t * 7) % 3 == 0 else ("g_hold", 1.0)
+        if 6.8 <= t < 8.0 or 11.8 <= t < 12.4:
+            return ("g_hold_dark", 1.0)
+        if 8.0 <= t < 11.8:
+            return ("g_hold_fig", 1.0)
+        return ("g_hold", 1.0)
+    add(Segment("18_hold", 16, still_frames(hold_s, DATE, T0 + 190, shake=0.0, seed=5), "cam",
                 [(0.0, "drop", 0.35), (0.4, "Z01", 1.0), (3.6, "Z02", 1.0), (13.2, "Z03", 1.0)],
-                hall, glitches=[(0, 0.4, 0.9)]))
+                bed(0.012, 0.016, 0.006, buzz_gate=gate_from_schedule(hold_s, ("g_hold", "g_hold_fig"))), glitches=[(0, 0.4, 0.9)]))
     add(Segment("19_close", SHOT_LEN["g_close"] / FPS, seq("g_close", 206), "cam",
-                [(0.5, "button", 0.6), (0.9, "elev_doors", 0.8), (1.35, "stinger_big", 0.9)], hall, glitches=[(3.6, 0.4, 1.0)]))
+                [(0.5, "button", 0.6), (0.9, "elev_doors", 0.8)], hall, glitches=[(3.6, 0.4, 1.0)]))
     # the tape keeps running
     add(Segment("19b_dark", 3.0, lambda i, t: B.Image.new("RGB", (B.W, B.H)), "cam", [], bed(0.014, 0.0, 0.012)))
     night = flicker(211, 0.35, "g_night_a", "g_night_b")
