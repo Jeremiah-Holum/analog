@@ -210,8 +210,8 @@ def g_close(with_doors=True, variant="lit"):
             if variant == "figure":
                 kit.figure((-0.35, 4.2, 0), toward=(0.35, -1.55))
             if variant == "dark_figure":       # lights out: it's right outside the doors, a silhouette
-                s1.static_levels(fx, {0: 0.0, 1: 0.0, 2: 0.3})
-                kit.figure((-0.62, 0.75, 0), toward=(0.35, -1.55), head_tilt=0.15)
+                s1.static_levels(fx, {0: 0.06, 1: 0.0, 2: 0.9})    # the hall behind it stays faintly lit
+                kit.figure((-0.42, 0.95, 0), toward=(0.35, -1.55), head_tilt=0.15)
             return ("still",)
         for f, xl in ((1, -0.74), (22, -0.74), (84, -0.25)):
             dl.location.x, dr.location.x = xl, -xl
