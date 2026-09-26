@@ -102,7 +102,6 @@ def open_on(floor):
         else:
             L, fx, _ = hall12(M)
             s1.animate_all(fx, n)
-            kit.figure((0.2, L - 1.8, 0), toward=(0, 0))
             key_cam(cam, 1, (0.05, -1.25, 1.58), (0, 14, 1.35))
             key_cam(cam, n, (0.05, -1.15, 1.58), (0.1, 14, 1.4))
             kit.handheld(cam, 0.7)
@@ -112,31 +111,21 @@ def open_on(floor):
 
 # ------------------------------------------------------------------ the third floor
 def g_count():
-    """Gary counts twelve offices. The figure only moves while he's looking at a door, and it's gone after the last."""
+    """Gary counts twelve offices. The figure appears once, after door 7, and is gone by door 8."""
     sc = kit.reset(64); M = kit.Mats()
     L, fx, _ = hall12(M)
     g = GARY_COUNT
     n = s1.count_shot(g["n"], g["y0"], g["speed"], g["dur"], sc, fx, stop_y=g["stop_y"])
     s1.animate_all(fx, n)
-    fig = kit.figure((0.2, L - 1.8, 0), toward=(0, 0))
     times = count_walk(g["n"], g["y0"], g["speed"])
-    y = L - 1.8
-    fig.keyframe_insert("location", frame=1)
-    for i, t in enumerate(times):
-        f = int(round(t * FPS)) + 1
-        cam_y = g["y0"] + g["speed"] * t
-        if i >= 4:
-            y = max(cam_y + 5.5, y - 2.3)
-        fig.location.y = y
-        fig.location.x = 0.25 * math.sin(i)
-        fig.keyframe_insert("location", frame=f)
-    for fc in fig.animation_data.action.fcurves:
-        for kp in fc.keyframe_points:
-            kp.interpolation = 'CONSTANT'
-    gone = int(round(times[-1] * FPS)) + 2      # vanishes while he reads the last door
+    # It's there exactly once: when he looks back up the hall after reading door 7, it's standing under
+    # the next working light. When he looks back after door 8, it's gone.
+    fig = kit.figure((0.1, 20.2, 0), toward=(0.1, 12.3))
+    show = int(round(times[6] * FPS)) + 2       # while the camera is turned to door 7's plaque
+    hide = int(round(times[7] * FPS)) + 2       # while it's turned to door 8's plaque
     for part in [fig] + list(fig.children_recursive):
-        for f, hide in ((1, False), (gone - 1, False), (gone, True)):
-            part.hide_render = hide
+        for f, h in ((1, True), (show - 1, True), (show, False), (hide - 1, False), (hide, True)):
+            part.hide_render = h
             part.keyframe_insert("hide_render", frame=f)
     return ("anim", n)
 
@@ -191,7 +180,7 @@ def g_turn():
 
 
 # ------------------------------------------------------------------ sign-off
-def g_close(with_doors=True):
+def g_close(with_doors=True, variant="lit"):
     """Camera set down on the elevator handrail, looking out at the third floor. The doors close.
     Something is standing in the gap."""
     def build():
@@ -204,17 +193,14 @@ def g_close(with_doors=True):
         if not with_doors:              # the long hold before the doors close
             for d, x in ((dl, -0.74), (dr, 0.74)):
                 d.location.x = x
-            daylight(fx)
+            s1.static_levels(fx, {1: 0.0} if variant == "dark" else None)   # fixture 1 is the broken one
+            if variant == "figure":
+                kit.figure((-0.35, 4.2, 0), toward=(0.35, -1.55))
             return ("still",)
         for f, xl in ((1, -0.74), (22, -0.74), (84, -0.25)):
             dl.location.x, dr.location.x = xl, -xl
             dl.keyframe_insert("location", frame=f); dr.keyframe_insert("location", frame=f)
-        s1.animate_all(fx, n, {0: lambda f: 0.1 if 30 <= f < 34 else 1.0})
-        fig = kit.figure((0.05, 1.9, 0), toward=(0.35, -1.55))
-        for part in [fig] + list(fig.children_recursive):
-            for f, hide in ((1, True), (32, True), (33, False)):
-                part.hide_render = hide
-                part.keyframe_insert("hide_render", frame=f)
+        s1.animate_all(fx, n)
         return ("anim", n)
     return build
 
@@ -257,7 +243,7 @@ STILLS = {
     "g_lobby": lobby,
     "g_panel": elevator_panel,
     "g_tv": g_tv,
-    "g_hold": g_close(False),
+    "g_hold": g_close(False), "g_hold_dark": g_close(False, "dark"), "g_hold_fig": g_close(False, "figure"),
     "g_back_lit": g_back(False), "g_back_dim": g_back(True),
     "g_night_a": g_night(True), "g_night_b": g_night(False),
 }
