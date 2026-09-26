@@ -209,6 +209,9 @@ def g_close(with_doors=True, variant="lit"):
             s1.static_levels(fx, {0: 0.0, 1: 0.0, 2: 0.3} if variant == "dark" else None)   # the broken light takes the nearest ones with it
             if variant == "figure":
                 kit.figure((-0.35, 4.2, 0), toward=(0.35, -1.55))
+            if variant == "dark_figure":       # lights out: it's right outside the doors, a silhouette
+                s1.static_levels(fx, {0: 0.0, 1: 0.0, 2: 0.3})
+                kit.figure((-0.62, 0.75, 0), toward=(0.35, -1.55), head_tilt=0.15)
             return ("still",)
         for f, xl in ((1, -0.74), (22, -0.74), (84, -0.25)):
             dl.location.x, dr.location.x = xl, -xl
@@ -256,7 +259,7 @@ STILLS = {
     "g_lobby": lobby,
     "g_panel": elevator_panel,
     "g_tv": g_tv,
-    "g_hold": g_close(False), "g_hold_dark": g_close(False, "dark"), "g_hold_fig": g_close(False, "figure"),
+    "g_hold": g_close(False), "g_hold_dark": g_close(False, "dark"), "g_hold_fig": g_close(False, "figure"), "g_hold_dark_fig": g_close(False, "dark_figure"),
     "g_back_lit": g_back(False), "g_back_dim": g_back(True),
     "g_night_a": g_night(True), "g_night_b": g_night(False),
 }
