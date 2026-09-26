@@ -42,7 +42,7 @@ def film():
                                              typed=False, align="center"), "card", [(0, "vcr", 0.5)], bed(0.01)))
 
     # lobby
-    add(Segment("10_lobby", 30, still("g_lobby", 0, 0.9, 2, play=True), "cam",
+    add(Segment("10_lobby", 36, still("g_lobby", 0, 0.9, 2, play=True), "cam",
                 [(1.0, "L01", 1.0), (4.0, "L02", 1.0), (11.5, "L05", 1.0), (19.5, "L03", 1.0), (25.5, "L04", 1.0)],
                 room, glitches=[(0, 0.5, 1.0)]))
     # elevator panel
@@ -61,7 +61,7 @@ def film():
     g = GARY_COUNT
     hold = 4.2
     times = count_walk(g["n"], g["y0"], g["speed"])
-    add(Segment("14_count", hold + g["dur"] + 1.0, seq("g_count", 72, hold_first=hold), "cam",
+    add(Segment("14_count", hold + g["dur"] + 3.0, seq("g_count", 72, hold_first=hold), "cam",
                 [(0.3, "C01", 1.0)] + [(hold + t - 0.25, f"G{k + 1:02d}", 1.0) for k, t in enumerate(times)]
                 + [(hold + times[-1] + 1.3, "C02", 1.0), (hold + g["dur"] - 4.6, "C03", 1.0)]
                 + steps(hold, hold + g["dur"] - 0.5, 1.7),
@@ -71,7 +71,7 @@ def film():
                 [(5.0, "O01", 1.0)] + steps(0, 10.5, 1.5), bed(0.012, 0.008, 0.01, "drone_low", 0.12)))
     add(Segment("16_tv", 6, still("g_tv", 124, 0.9, 4), "cam", [(1.0, "O02", 1.0)],
                 bed(0.012, 0.0, 0.01, "drone_low", 0.18), af=[0.9]))
-    add(Segment("17_turn", SHOT_LEN["g_turn"] / FPS, seq("g_turn", 130, bright=1.2), "cam",
+    add(Segment("17_turn", SHOT_LEN["g_turn"] / FPS + 2.0, seq("g_turn", 130, bright=1.2), "cam",
                 [(2.2, "O03", 1.0), (4.2, "O04", 1.0)], bed(0.012, 0.006, 0.01)))
     # walking back
     back = flicker(151, 0.5, "g_back_lit", "g_back_dim", quiet=[(0, 6.5)])

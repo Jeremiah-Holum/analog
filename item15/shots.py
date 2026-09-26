@@ -193,7 +193,7 @@ def g_close(with_doors=True, variant="lit"):
         if not with_doors:              # the long hold before the doors close
             for d, x in ((dl, -0.74), (dr, 0.74)):
                 d.location.x = x
-            s1.static_levels(fx, {1: 0.0} if variant == "dark" else None)   # fixture 1 is the broken one
+            s1.static_levels(fx, {0: 0.0, 1: 0.0, 2: 0.3} if variant == "dark" else None)   # the broken light takes the nearest ones with it
             if variant == "figure":
                 kit.figure((-0.35, 4.2, 0), toward=(0.35, -1.55))
             return ("still",)

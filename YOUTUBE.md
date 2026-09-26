@@ -103,7 +103,7 @@ Chatterbox (MIT), Kokoro (Apache-2.0), and the renders and sound effects made fo
 
 # ITEM 15: SPACE AVAILABLE
 
-- **Video:** `renders/item15_youtube.mp4` (4:16). **Thumbnail:** `renders/thumbnails/item15_panel.png`
+- **Video:** `renders/item15_youtube.mp4` (4:26). **Thumbnail:** `renders/thumbnails/item15_panel.png`
 - **Title:** `ITEM 15` (alternatives: *space available*, *priced to move*, *555-0141*)
 
 ```
