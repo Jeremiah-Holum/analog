@@ -102,6 +102,7 @@ def open_on(floor):
         else:
             L, fx, _ = hall12(M)
             s1.animate_all(fx, n)
+            kit.figure((0.2, L - 1.8, 0), toward=(0, 0))          # far end of the hall, barely visible
             key_cam(cam, 1, (0.05, -1.25, 1.58), (0, 14, 1.35))
             key_cam(cam, n, (0.05, -1.15, 1.58), (0.1, 14, 1.4))
             kit.handheld(cam, 0.7)
@@ -111,20 +112,32 @@ def open_on(floor):
 
 # ------------------------------------------------------------------ the third floor
 def g_count():
-    """Gary counts twelve offices. The figure appears once, after door 7, and is gone by door 8."""
+    """Gary counts twelve offices. The figure creeps closer between looks, and is gone after door 7."""
     sc = kit.reset(64); M = kit.Mats()
     L, fx, _ = hall12(M)
     g = GARY_COUNT
     n = s1.count_shot(g["n"], g["y0"], g["speed"], g["dur"], sc, fx, stop_y=g["stop_y"])
     s1.animate_all(fx, n)
     times = count_walk(g["n"], g["y0"], g["speed"])
-    # It's there exactly once: when he looks back up the hall after reading door 7, it's standing under
-    # the next working light. When he looks back after door 8, it's gone.
-    fig = kit.figure((0.1, 20.2, 0), toward=(0.1, 12.3))
-    show = int(round(times[6] * FPS)) + 2       # while the camera is turned to door 7's plaque
-    hide = int(round(times[7] * FPS)) + 2       # while it's turned to door 8's plaque
+    # It's at the far end from the start and gets closer every time he looks at a door, never seen moving.
+    # After door 7 it's still there when he looks back up the hall; when he looks back after door 8, it's gone.
+    fig = kit.figure((0.2, L - 1.8, 0), toward=(0, 0))
+    y = L - 1.8
+    fig.keyframe_insert("location", frame=1)
+    for i, t in enumerate(times[:7]):
+        f = int(round(t * FPS)) + 1
+        cam_y = g["y0"] + g["speed"] * t
+        if i >= 3:
+            y = max(cam_y + 6.0, y - 2.0)
+        fig.location.y = y
+        fig.location.x = 0.25 * math.sin(i)
+        fig.keyframe_insert("location", frame=f)
+    for fc in fig.animation_data.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = 'CONSTANT'
+    gone = int(round(times[7] * FPS)) + 2       # vanishes while he reads door 8
     for part in [fig] + list(fig.children_recursive):
-        for f, h in ((1, True), (show - 1, True), (show, False), (hide - 1, False), (hide, True)):
+        for f, h in ((1, False), (gone - 1, False), (gone, True)):
             part.hide_render = h
             part.keyframe_insert("hide_render", frame=f)
     return ("anim", n)
