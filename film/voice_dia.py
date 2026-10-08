@@ -75,7 +75,7 @@ class Voicer:
 
     def group(self, name, keys, texts, style):
         """Short lines said as one longer take (the voice holds better, and the take is long enough to
-        voice-convert), then cut at the pauses. Used for the door counts."""
+        voice-convert), then cut where each line starts. Used for the door counts."""
         text = " ... ".join(texts)
         for attempt in range(TRIES + 2):
             cand = os.path.join(RAW, f"{name}_try.wav")
@@ -86,19 +86,15 @@ class Voicer:
                 os.replace(vc, cand)
             sim = self.sim(cand)
             y, sr = librosa.load(cand, sr=None)
-            iv = librosa.effects.split(y, top_db=32, frame_length=1024, hop_length=256)
-            iv = [v for v in iv if v[1] - v[0] > 0.12 * sr]                 # drop clicks and breaths
-            while len(iv) > len(keys):                                        # merge the closest pair
-                gaps = [iv[i + 1][0] - iv[i][1] for i in range(len(iv) - 1)]
-                i = int(np.argmin(gaps))
-                iv = iv[:i] + [np.array([iv[i][0], iv[i + 1][1]])] + iv[i + 2:]
-            print(f"  {name} try{attempt} {time.time() - t:.0f}s voice={sim:.2f} chunks={len(iv)}", flush=True)
-            if len(iv) != len(keys) or sim < SIM_OK - 0.04:
+            iv = self.cuts(cand, texts, len(y), sr)
+            print(f"  {name} try{attempt} {time.time() - t:.0f}s voice={sim:.2f} pieces={len(iv)}", flush=True)
+            if len(iv) != len(keys) or sim < SIM_OK - 0.06:
                 continue
             ok, heard = True, []
             for (a, b), key, tx in zip(iv, keys, texts):
                 p = os.path.join(RAW, key + ".wav")
-                sf.write(p, y[max(0, a - int(0.04 * sr)):b + int(0.1 * sr)], sr)
+                piece, _ = librosa.effects.trim(y[a:b], top_db=38)
+                sf.write(p, piece, sr)
                 h = self.heard(p)
                 heard.append(h)
                 if text_score(spoken(tx), h) < 0.8:
@@ -112,6 +108,17 @@ class Voicer:
                 return True
         print(f"{name} FAILED", flush=True)
         return False
+
+    def cuts(self, path, texts, n, sr):
+        """Split a grouped take where each line's first word starts (Whisper word timestamps)."""
+        segs = self.asr.transcribe(path, beam_size=3, word_timestamps=True)[0]
+        ws = [(re.sub(r"[^a-z']", "", w.word.lower()), w.start, w.end) for sg in segs for w in sg.words]
+        first = re.sub(r"[^a-z']", "", spoken(texts[0]).split()[0].lower())
+        starts = [i for i, w in enumerate(ws) if w[0] == first]
+        if len(starts) != len(texts):
+            return []
+        bounds = [0] + [int((ws[i - 1][2] + ws[i][1]) / 2 * sr) if i else 0 for i in starts[1:]] + [n]
+        return [(bounds[k], bounds[k + 1]) for k in range(len(texts))]
 
     def line(self, key, style, text):
         raw = os.path.join(RAW, key + ".wav")
