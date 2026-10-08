@@ -117,7 +117,8 @@ class Voicer:
         starts = [i for i, w in enumerate(ws) if w[0] == first]
         if len(starts) != len(texts):
             return []
-        bounds = [0] + [int((ws[i - 1][2] + ws[i][1]) / 2 * sr) if i else 0 for i in starts[1:]] + [n]
+        # cut just before each line's first word (Whisper's word starts run a little late), not mid-gap
+        bounds = [0] + [int(max(ws[i - 1][2], ws[i][1] - 0.15) * sr) for i in starts[1:]] + [n]
         return [(bounds[k], bounds[k + 1]) for k in range(len(texts))]
 
     def line(self, key, style, text):
