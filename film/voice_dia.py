@@ -4,10 +4,11 @@
 - every line continues from one take picked by ear (script.DIA_PROMPT: audio + its exact transcript),
   so the voice stays the same person from line to line
 - nonverbal cues in the text, e.g. (laughs), (clears throat), are performed by the model
-- each take is checked by Whisper; up to TRIES takes, best one kept
+- each take is checked by Whisper (words) and by a speaker encoder (is it still the same man?);
+  up to TRIES takes, best one kept
 - same camcorder treatment and loudness levelling as voice3.py
 """
-import os, re, sys, time
+import os, re, subprocess, sys, time
 import numpy as np
 import torch, librosa, soundfile as sf
 from faster_whisper import WhisperModel
@@ -17,8 +18,11 @@ _s = importlib.import_module(project.SCRIPT)
 from vo_common import ROOT, OUT, RAW, text_score, finish
 
 CK = "nari-labs/Dia-1.6B-0626"
-TRIES = int(os.environ.get("TRIES", 3))
+TRIES = int(os.environ.get("TRIES", 4))
+TEMP = float(os.environ.get("TEMP", 1.8))
 SR = 44100
+CB_PY = "/home/user/tts/cb/bin/python"      # the speaker encoder lives in the Chatterbox venv
+SIM_OK = 0.82                                # 3 s clips: same voice ~0.95, another Dia voice ~0.70
 
 
 def spoken(text):
@@ -34,6 +38,12 @@ class Voicer:
         wav, text = _s.DIA_PROMPT
         self.prompt, _ = librosa.load(os.path.join(ROOT, "out", "tts_ref", wav), sr=SR, mono=True)
         self.prompt_text = text
+        self.prompt_path = os.path.join(ROOT, "out", "tts_ref", wav)
+
+    def sim(self, path):
+        r = subprocess.run([CB_PY, os.path.join(ROOT, "film", "spk_sim.py"), self.prompt_path, path],
+                           capture_output=True, text=True)
+        return float(r.stdout.split()[-1]) if r.returncode == 0 and r.stdout.strip() else 0.8
 
     def heard(self, path):
         return " ".join(s.text for s in self.asr.transcribe(path, beam_size=3)[0]).strip()
@@ -46,7 +56,7 @@ class Voicer:
         n_words = len(spoken(text).split())
         budget = int((n_words * 0.5 + 2.5 + 1.2 * text.count("(")) * 86 * 1.6)   # ~86 frames per second
         out = self.model.generate(**inp, max_new_tokens=min(budget, 2400), guidance_scale=3.0,
-                                  temperature=1.8, top_p=0.90, top_k=45)
+                                  temperature=TEMP, top_p=0.90, top_k=45)
         self.proc.save_audio(self.proc.batch_decode(out, audio_prompt_len=plen), path)
         y, sr = librosa.load(path, sr=None)
         y, _ = librosa.effects.trim(y, top_db=38)
@@ -68,20 +78,23 @@ class Voicer:
             heard = self.heard(cand)
             ts = text_score(spoken(text), heard)
             too_long = max(0.0, dur - (n_words * 0.6 + 2.5 + 1.5 * text.count("("))) * 0.2
-            total = (1 - ts) * 5 + too_long
-            print(f"  {key} try{attempt} {time.time() - t:.0f}s dur={dur:.1f} words={ts:.2f} | {heard}", flush=True)
+            sim = self.sim(cand)
+            weight = 10 if dur >= 2.0 else 4                    # very short clips give a noisier similarity
+            total = (1 - ts) * 5 + too_long + max(0.0, 0.88 - sim) * weight
+            print(f"  {key} try{attempt} {time.time() - t:.0f}s dur={dur:.1f} words={ts:.2f} voice={sim:.2f} | {heard}",
+                  flush=True)
             if best is None or total < best[0]:
-                best = (total, cand, heard, ts)
-            if ts >= 0.9 and too_long == 0:
+                best = (total, cand, heard, ts, sim)
+            if ts >= 0.9 and too_long == 0 and (sim >= SIM_OK or (dur < 2.0 and sim >= SIM_OK - 0.1)):
                 break
-        total, cand, heard, ts = best
+        total, cand, heard, ts, sim = best
         os.replace(cand, raw)
         for a in range(TRIES):
             p = os.path.join(RAW, f"{key}_try{a}.wav")
             if os.path.exists(p):
                 os.remove(p)
         finish(raw, key, style)
-        print(f"{key} words={ts:.2f} | {heard}", flush=True)
+        print(f"{key} words={ts:.2f} voice={sim:.2f} | {heard}", flush=True)
 
 
 def main():
