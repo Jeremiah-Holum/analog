@@ -43,7 +43,7 @@ def film():
 
     # lobby
     add(Segment("10_lobby", 36, still("g_lobby", 0, 0.9, 2, play=True), "cam",
-                [(1.0, "L01", 1.0), (4.0, "L02", 1.0), (11.5, "L05", 1.0), (19.5, "L03", 1.0), (25.5, "L04", 1.0)],
+                [(1.0, "L01", 1.0), (11.8, "L05", 1.0), (19.5, "L03", 1.0), (25.5, "L04", 1.0)],
                 room, glitches=[(0, 0.5, 1.0)]))
     # elevator panel
     add(Segment("11_panel", 8, still("g_panel", 26, 0.8, 3), "cam", [(0.6, "E01", 1.0)],

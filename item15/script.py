@@ -2,8 +2,8 @@
 
 VO = {
     # lobby, the old security desk
-    "L01": ("gary", "Okay, is it... yep. Good morning! Uh, Gary Lindqvist, Coulee Commercial Realty."),
-    "L02": ("gary", "And this is the Brenner Mutual building. Four floors, forty thousand square feet, and, uh... folks, it's priced to move."),
+    "L01": ("gary", "Okay, is it... yep. (clears throat) Good morning! Uh, Gary Lindqvist, Coulee Commercial Realty. "
+                    "And this is the Brenner Mutual building. Four floors, forty thousand square feet, and, uh... (laughs) folks, it's priced to move."),
     "L03": ("gary", "This was the, uh~, the old security desk. Monitors stay with the building, by the way."),
     "L04": ("gary", "Somebody left one on. Huh. Okay! Let's go up."),
     "L05": ("gary", "Built in, uh, sixty-eight, I think. Brenner Mutual was here right up till ninety-four. Moved out kind of... kind of sudden, I heard."),
@@ -54,3 +54,19 @@ DELIVERY = {  # (reference voice, exaggeration, cfg_weight, temperature)
     "gary_far": ("gary", 0.4, 0.5, 0.75),
 }
 LOUDNESS = {"gary": -19, "gary_q": -21, "gary_far": -34}
+
+# Voice pass 4 (film/voice_dia.py): Dia-1.6B. Every Gary line continues from the take picked by ear
+# (out/tts_ref/gary_dia.wav, Dia seed 2), so he keeps that voice. L01 *is* that take.
+DIA_PROMPT = ("gary_dia.wav", VO["L01"][1])
+DIA_USE_PROMPT = "L01"
+DIA = {  # Dia-only rewrites: nonverbal cues in (parentheses), hesitations it performs on its own
+    "L03": "This was the, uh... the old security desk. Monitors stay with the building, by the way.",
+    "L04": "Somebody left one on. Huh. (laughs) Okay! Let's go up.",
+    "E02": "Aaand... here we go.",
+    "T02": "Plenty of natural... well, plenty of light. (laughs)",
+    "E04": "Must be that, uh, electrical thing. Well... while we're here!",
+    "C02": "That's... huh. (clears throat) That's more than the listing says.",
+    "O02": "Even comes with a TV! (laughs)",
+    "O03": "So, uh... anyway.",
+    "B02": "Twelve offices, folks. Twelve. (laughs) I'm gonna have to, uh, update that listing.",
+}

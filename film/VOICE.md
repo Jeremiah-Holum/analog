@@ -101,3 +101,80 @@ python3 film/build.py
 
 `film/voice.py` (Piper) and `film/voice2.py` (the earlier Chatterbox passes) are kept for
 reference. `voice.py` still holds the per-style SoX chains that `voice3.py` uses.
+
+---
+
+# ITEM 15: Gary's voice with Dia (voice pass 4)
+
+Chatterbox hit a ceiling on Gary: it read the disfluencies ("uh", "..."), but never *performed*
+them, and it couldn't laugh or clear its throat. Gary's final voice comes from **Dia**.
+
+| Tool | Role | License |
+|---|---|---|
+| [Dia-1.6B](https://huggingface.co/nari-labs/Dia-1.6B-0626) (`nari-labs/Dia-1.6B-0626`, Nari Labs), via Hugging Face `transformers` | Dialogue text-to-speech with nonverbal sounds | Apache-2.0 |
+
+### Why it sounds more human
+
+Dia was trained on conversation, not audiobook narration:
+- **Nonverbal cues** written in parentheses are performed: `(laughs)`, `(clears throat)`,
+  `(sighs)`, `(coughs)`.
+- **"uh", "..." and restarts** come out as real hesitation instead of being read stiffly.
+- It isn't imitating a reference narrator, so it invents its own loose, casual delivery.
+
+### How Gary's voice was found
+
+1. Gary's opening lines were written as a script with a speaker tag and cues:
+   ```
+   [S1] Okay, is it... yep. (clears throat) Good morning! Uh, Gary Lindqvist, Coulee Commercial Realty.
+   And this is the Brenner Mutual building. Four floors, forty thousand square feet, and, uh... (laughs) folks, it's priced to move.
+   ```
+2. Generated with `guidance_scale=3.0, temperature=1.8, top_p=0.90, top_k=45` (the high
+   temperature keeps the delivery loose) on seeds 1 and 2. **Every seed is a different person.**
+   Seed 2 was picked by ear ("perfect for a realtor"). That 10-second take is
+   `out/tts_ref/gary_dia.wav`, and it is used as-is for the lobby opening (`L01`).
+
+### Keeping the same voice on every line (`film/voice_dia.py`)
+
+Each new line is generated as a *continuation* of the picked take: Dia gets the take's audio and
+its exact transcript, followed by the new line, and only the new audio is kept:
+
+```python
+inp = proc(text=[f"[S1] {prompt_transcript} [S1] {new_line}"], audio=[prompt_audio_44k],
+           padding=True, return_tensors="pt")
+plen = proc.get_audio_prompt_len(inp["decoder_attention_mask"])
+out = model.generate(**inp, max_new_tokens=..., guidance_scale=3.0, temperature=1.8, top_p=0.90, top_k=45)
+proc.save_audio(proc.batch_decode(out, audio_prompt_len=plen), "line.wav")
+```
+
+Then, as in pass 3: Whisper checks the words (cues in parentheses are ignored), up to 3 takes per
+line with the best kept (overlong takes, where it rambles, are penalized), the camcorder SoX chain
+from `film/voice.py`, and `loudnorm` levelling. Lines that need a laugh or a hesitation get a
+Dia-only rewrite in `item15/script.py` (`DIA`).
+
+### Tips
+
+- Keep each generation to about 5–20 s of speech. Longer and it rushes; one or two words alone
+  come out garbled (the voice prompt helps here, since the model has context).
+- Generate several seeds and pick the voice by ear. Metrics picked a worse voice once already.
+- CPU: about 1–4 minutes per line. With an NVIDIA GPU, seconds.
+
+### Reproducing
+
+```bash
+python3 -m venv /home/user/tts/dia
+/home/user/tts/dia/bin/pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+/home/user/tts/dia/bin/pip install transformers soundfile descript-audio-codec faster-whisper num2words librosa
+FILM=item15 /home/user/tts/dia/bin/python film/voice_dia.py      # or pass line ids
+FILM=item15 python3 film/build.py
+```
+
+The shared helpers (Whisper word scoring, word stretch, camcorder treatment, levelling) live in
+`film/vo_common.py`, used by both `voice3.py` and `voice_dia.py`.
+
+### Asking another AI to do this
+
+> Use the open-source Dia TTS model (nari-labs/Dia-1.6B-0626) through Hugging Face transformers.
+> Write the lines with [S1] tags and nonverbal cues like (laughs), (clears throat), "uh" and "...".
+> Use temperature 1.8, guidance_scale 3.0, top_p 0.9, top_k 45. Generate several seeds so I can
+> pick a voice by ear, then use the picked take plus its transcript as an audio prompt so every
+> later line keeps that voice. Check each line with Whisper.
