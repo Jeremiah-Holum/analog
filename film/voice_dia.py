@@ -73,6 +73,46 @@ class Voicer:
         sf.write(path, y, sr)
         return len(y) / sr, n_words
 
+    def group(self, name, keys, texts, style):
+        """Short lines said as one longer take (the voice holds better, and the take is long enough to
+        voice-convert), then cut at the pauses. Used for the door counts."""
+        text = " ... ".join(texts)
+        for attempt in range(TRIES + 2):
+            cand = os.path.join(RAW, f"{name}_try.wav")
+            t = time.time()
+            self.take(text, 7 + 100 * attempt + int(os.environ.get("VSEED", 0)), cand)
+            vc = self.convert(cand)
+            if vc:
+                os.replace(vc, cand)
+            sim = self.sim(cand)
+            y, sr = librosa.load(cand, sr=None)
+            iv = librosa.effects.split(y, top_db=32, frame_length=1024, hop_length=256)
+            iv = [v for v in iv if v[1] - v[0] > 0.12 * sr]                 # drop clicks and breaths
+            while len(iv) > len(keys):                                        # merge the closest pair
+                gaps = [iv[i + 1][0] - iv[i][1] for i in range(len(iv) - 1)]
+                i = int(np.argmin(gaps))
+                iv = iv[:i] + [np.array([iv[i][0], iv[i + 1][1]])] + iv[i + 2:]
+            print(f"  {name} try{attempt} {time.time() - t:.0f}s voice={sim:.2f} chunks={len(iv)}", flush=True)
+            if len(iv) != len(keys) or sim < SIM_OK - 0.04:
+                continue
+            ok, heard = True, []
+            for (a, b), key, tx in zip(iv, keys, texts):
+                p = os.path.join(RAW, key + ".wav")
+                sf.write(p, y[max(0, a - int(0.04 * sr)):b + int(0.1 * sr)], sr)
+                h = self.heard(p)
+                heard.append(h)
+                if text_score(spoken(tx), h) < 0.8:
+                    ok = False
+            print(f"    heard: {' | '.join(heard)}", flush=True)
+            if ok:
+                for key in keys:
+                    finish(os.path.join(RAW, key + ".wav"), key, style)
+                os.remove(cand)
+                print(f"{name} ok voice={sim:.2f}", flush=True)
+                return True
+        print(f"{name} FAILED", flush=True)
+        return False
+
     def line(self, key, style, text):
         raw = os.path.join(RAW, key + ".wav")
         if key == getattr(_s, "DIA_USE_PROMPT", None):
@@ -126,8 +166,13 @@ def main():
     os.makedirs(RAW, exist_ok=True)
     v = Voicer()
     dia = getattr(_s, "DIA", {})
+    grouped = set()
+    for name, keys in getattr(_s, "DIA_GROUPS", {}).items():
+        grouped.update(keys)
+        if not only or name in only:
+            v.group(name, keys, [dia.get(k, _s.VO[k][1]) for k in keys], _s.VO[keys[0]][0])
     for key, (style, text) in _s.VO.items():
-        if (only and key not in only) or style == "memo":
+        if (only and key not in only) or style == "memo" or key in grouped:
             continue
         v.line(key, style, dia.get(key, text))
     print("done")

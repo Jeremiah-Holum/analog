@@ -70,3 +70,8 @@ DIA = {  # Dia-only rewrites: nonverbal cues in (parentheses), hesitations it pe
     "O03": "So, uh... anyway.",
     "B02": "Twelve offices, folks. Twelve. (laughs) I'm gonna have to, uh, update that listing.",
 }
+DIA_GROUPS = {  # said as one take, cut at the pauses (single short lines drift off Gary's voice)
+    "COUNT_A": ["G01", "G02", "G03", "G04"],
+    "COUNT_B": ["G05", "G06", "G07", "G08"],
+    "COUNT_C": ["G09", "G10", "G11", "G12"],
+}
