@@ -151,6 +151,23 @@ line with the best kept (overlong takes, where it rambles, are penalized), the c
 from `film/voice.py`, and `loudnorm` levelling. Lines that need a laugh or a hesitation get a
 Dia-only rewrite in `item15/script.py` (`DIA`).
 
+### The voice drifts, so check it
+
+Continuing from a voice prompt is not a lock: about half of the first pass came out sounding like a
+slightly different man. Since nobody can listen to 38 lines on every run, every take is also scored
+with a **speaker encoder** (Chatterbox's `VoiceEncoder`, `film/spk_sim.py`): cosine similarity of
+the take to the picked Gary take. Calibrated on Gary: clips of the same voice score about 0.95 (3 s)
+or 0.85 (1.2 s); a different Dia voice scores about 0.70 (3 s) or 0.62 (1.2 s).
+
+- **Long lines (2.5 s or more) that drifted** are voice-converted onto the Gary take with
+  `ChatterboxVC` (`film/vc_to.py`). That keeps Dia's delivery, laughs and timing and pulls the
+  timbre back (B01 went from 0.56 to 0.85, C03 from 0.71 to 0.90). The words are re-checked
+  with Whisper afterwards.
+- **Short lines** come out garbled from voice conversion ("Even comes with a TV" turned into
+  "...for the tule"), so they are re-rolled with new seeds until the voice matches (≥ 0.75).
+- **Temperature**: 1.8 found the voice; for continuations 1.4 holds it a little better.
+  At 1.0 Dia produced silence.
+
 ### Tips
 
 - Keep each generation to about 5–20 s of speech. Longer and it rushes; one or two words alone

@@ -47,7 +47,7 @@ for _i in range(1, 13):
     VO[f"G{_i:02d}"] = ("gary", f"That's {_WORDS[_i - 1].lower()}" + ("!" if _i >= 10 else "."))
 COUNTS = {}
 
-# Gary's voice: out/tts_ref/gary.wav = ~20 s of LibriTTS-R test-clean speaker 4077 (CC BY 4.0), picked by ear.
+# Gary (pass 3, Chatterbox): out/tts_ref/gary.wav = LibriTTS-R 4077. Pass 4 (Dia, current) is DIA_PROMPT below.
 DELIVERY = {  # (reference voice, exaggeration, cfg_weight, temperature)
     "gary":   ("gary", 0.4, 0.5, 0.75),     # same calm settings that worked for Dale
     "gary_q": ("gary", 0.4, 0.5, 0.75),

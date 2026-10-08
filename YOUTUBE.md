@@ -118,10 +118,11 @@ space available.
 —
 
 This is a work of fiction. Voices are synthetic (AI text-to-speech).
-Voice: LibriTTS-R (Koizumi et al., 2023), CC BY 4.0, from LibriVox recordings.
+Voice: Dia-1.6B (Nari Labs, Apache 2.0) and Chatterbox (Resemble AI, MIT).
 Sound effects: Freesound contributors, CC0.
 
 #analoghorror #foundfootage #vhs
 ```
 
-ITEM 15 contains no RAVDESS audio, so it's clear for monetization.
+ITEM 15 contains no RAVDESS or LibriTTS audio: Gary is Dia-1.6B (Apache 2.0) with Chatterbox voice
+conversion (MIT), so it's clear for monetization.
