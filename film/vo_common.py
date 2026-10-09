@@ -15,8 +15,20 @@ OUT = os.path.join(project.OUT, "vo")
 RAW = os.path.join(project.OUT, "vo_raw")
 
 
+def say(digits):
+    """Numbers the way people read them off a door or a phone: 301 -> three oh one, 310 -> three ten,
+    0141 -> oh one four one; everything else as a plain number."""
+    n = int(digits)
+    if len(digits) == 3 and digits[0] != "0":
+        rest = n % 100
+        return f"{num2words(n // 100)} oh {num2words(rest)}" if rest < 10 else f"{num2words(n // 100)} {num2words(rest)}"
+    if len(digits) >= 4 and digits[0] == "0":
+        return " ".join("oh" if c == "0" else num2words(int(c)) for c in digits)
+    return num2words(n)
+
+
 def words(s):
-    s = re.sub(r"\d+", lambda m: " " + num2words(int(m.group())) + " ", s.lower().replace("'", ""))
+    s = re.sub(r"\d+", lambda m: " " + say(m.group()) + " ", s.lower().replace("'", ""))
     s = re.sub(r"\ba+nd\b", "and", s)
     for a, b in (("dunno", "dont know"), ("gonna", "going to"), ("wanna", "want to"), ("em", "them"), ("all right", "alright"),
                  ("for", "four"), ("to", "two"), ("too", "two"), ("won", "one"), ("ate", "eight")):   # homophones
