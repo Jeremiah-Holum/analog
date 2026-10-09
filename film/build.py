@@ -165,7 +165,7 @@ if REALCAM:   # a cheap camcorder lens: slight barrel distortion
 @lru_cache(None)
 def clip(name):
     for p in (os.path.join(OUT, "vo", name + ".wav"), os.path.join(OUT, "sfx", name + ".wav"),
-              os.path.join(project.SHARED_SFX, name + ".wav")):
+              os.path.join(project.SHARED_SFX, name + ".wav"), os.path.join(ROOT, "assets", "sfx", name + ".wav")):
         if os.path.exists(p):
             return sfx.read(p)
     raise FileNotFoundError(name)

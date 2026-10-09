@@ -24,6 +24,8 @@ SR = 44100
 CB_PY = "/home/user/tts/cb/bin/python"      # the speaker encoder lives in the Chatterbox venv
 SIM_OK = 0.82                                # 3 s clips: same voice ~0.95, another Dia voice ~0.70
 SIM_SHORT = 0.75                             # 1.2 s clips: same voice ~0.85, another Dia voice ~0.62
+DEVICE = os.environ.get("DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
+CB_PY = os.environ.get("CB_PY", CB_PY)
 
 
 def spoken(text):
@@ -34,8 +36,9 @@ def spoken(text):
 class Voicer:
     def __init__(self):
         self.proc = AutoProcessor.from_pretrained(CK)
-        self.model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32)
-        self.asr = WhisperModel("small.en", device="cpu", compute_type="int8")
+        self.model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32).to(DEVICE)
+        self.asr = WhisperModel("small.en", device="cpu", compute_type="int8")   # small and fast enough on the CPU
+        print("device:", DEVICE, flush=True)
         self.cur = None
 
     def use(self, style):
@@ -69,13 +72,13 @@ class Voicer:
     def take(self, text, seed, path):
         torch.manual_seed(seed)
         inp = self.proc(text=[f"[S1] {self.prompt_text} [S1] {text}"], audio=[self.prompt], padding=True,
-                        return_tensors="pt")
+                        return_tensors="pt").to(DEVICE)
         plen = self.proc.get_audio_prompt_len(inp["decoder_attention_mask"])
         n_words = len(spoken(text).split())
         budget = int((n_words * 0.5 + 2.5 + 1.2 * text.count("(")) * 86 * 1.6)   # ~86 frames per second
         out = self.model.generate(**inp, max_new_tokens=min(budget, 2400), guidance_scale=3.0,
                                   temperature=TEMP, top_p=0.90, top_k=45)
-        self.proc.save_audio(self.proc.batch_decode(out, audio_prompt_len=plen), path)
+        self.proc.save_audio(self.proc.batch_decode(out.cpu(), audio_prompt_len=plen), path)
         y, sr = librosa.load(path, sr=None)
         y, _ = librosa.effects.trim(y, top_db=38)
         sf.write(path, y, sr)

@@ -9,10 +9,35 @@ shots = importlib.import_module(project.SHOTS)
 
 ROOT = shots.ROOT
 names = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+
+
+def use_gpu():
+    """GPU=1 (or GPU=OPTIX / CUDA / HIP): render on the graphics card instead of the CPU."""
+    want = os.environ.get("GPU", "")
+    if not want:
+        return
+    prefs = bpy.context.preferences.addons["cycles"].preferences
+    for kind in ([want] if want not in ("1", "yes") else ["OPTIX", "CUDA", "HIP"]):
+        try:
+            prefs.compute_device_type = kind
+        except TypeError:
+            continue
+        prefs.get_devices()
+        devs = [d for d in prefs.devices if d.type == kind]
+        if devs:
+            for d in prefs.devices:
+                d.use = d.type == kind
+            print(f"[render] GPU: {kind} " + ", ".join(d.name for d in devs), flush=True)
+            return kind
+    print("[render] no GPU found, using the CPU", flush=True)
+
+
 for name in names:
     t0 = time.time()
     kind = shots.ALL[name]()
     sc = bpy.context.scene
+    if use_gpu():
+        sc.cycles.device = 'GPU'
     if kind[0] == "still":
         out = os.path.join(project.OUT, "stills", name + ".png")
         if os.path.exists(out):
