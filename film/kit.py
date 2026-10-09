@@ -503,153 +503,271 @@ def figure(loc, height=3.17, facing=math.pi, reach=0.0, head_tilt=0.0, toward=No
     return root
 
 
-def mat_skin(name="skin_real", base=(0.032, 0.028, 0.026), dark=(0.009, 0.008, 0.008)):
-    """Ashen, mottled, slightly waxy skin: noise-mottled colour, subsurface, pores/wrinkles as bump."""
+def mat_skin(name="skin_real", base=(0.032, 0.028, 0.026), dark=(0.009, 0.008, 0.008), seams=True):
+    """Ashen, mottled, waxy skin, in mismatched patches with darker seams between them (as if pieced
+    together), subsurface, and pores/wrinkles as bump."""
     m, nt, b = _mat(name)
     v = _coords(nt)
     blotch = _noise(nt, v, 5.0, 8.0, 0.65)
     col = _ramp_mix(nt, blotch, dark, base, 0.35, 0.68)
     veins = _noise(nt, v, 38.0, 3.0, 0.5)
-    vcol = _ramp_mix(nt, veins, (0.6, 0.55, 0.55), (1, 1, 1), 0.45, 0.52)     # faint darker vein lines
-    nt.links.new(_multiply(nt, col, vcol), b.inputs["Base Color"])
-    b.inputs["Roughness"].default_value = 0.5
+    vcol = _ramp_mix(nt, veins, (0.6, 0.55, 0.55), (1, 1, 1), 0.45, 0.52)
+    col = _multiply(nt, col, vcol)
+    if seams:
+        vor = nt.nodes.new("ShaderNodeTexVoronoi"); vor.inputs["Scale"].default_value = 16.0
+        nt.links.new(v, vor.inputs["Vector"])
+        patch = _ramp_mix(nt, vor.outputs["Color"], (0.85, 0.78, 0.76), (1.1, 1.02, 1.0), 0.0, 1.0)  # each piece a different tint
+        col = _multiply(nt, col, patch)
+        edge = nt.nodes.new("ShaderNodeTexVoronoi"); edge.feature = 'DISTANCE_TO_EDGE'
+        edge.inputs["Scale"].default_value = 16.0
+        nt.links.new(v, edge.inputs["Vector"])
+        seam = _ramp_mix(nt, edge.outputs["Distance"], (0.35, 0.16, 0.14), (1, 1, 1), 0.0, 0.025)        # dark, reddish seams
+        col = _multiply(nt, col, seam)
+        _bump(nt, b, edge.outputs["Distance"], 0.12)
+    else:
+        pores = _noise(nt, v, 220.0, 4.0, 0.7)
+        _bump(nt, b, pores, 0.12)
+    nt.links.new(col, b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.45
     b.inputs["Subsurface Weight"].default_value = 0.12
     b.inputs["Subsurface Radius"].default_value = (0.5, 0.18, 0.12)
     b.inputs["Subsurface Scale"].default_value = 0.02
-    b.inputs["Specular IOR Level"].default_value = 0.35
-    pores = _noise(nt, v, 220.0, 4.0, 0.7)
-    _bump(nt, b, pores, 0.12)
+    b.inputs["Specular IOR Level"].default_value = 0.4
     return m
 
 
+def mat_sinew():
+    """Wet, darker, redder tissue for the strands."""
+    m, nt, b = _mat("sinew")
+    v = _coords(nt)
+    n = _noise(nt, v, 60.0, 4.0, 0.6)
+    nt.links.new(_ramp_mix(nt, n, (0.02, 0.008, 0.007), (0.065, 0.026, 0.022), 0.3, 0.7), b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.3
+    b.inputs["Subsurface Weight"].default_value = 0.2
+    b.inputs["Subsurface Radius"].default_value = (0.6, 0.15, 0.1)
+    b.inputs["Subsurface Scale"].default_value = 0.01
+    _bump(nt, b, _noise(nt, v, 300.0, 2.0, 0.5), 0.2)
+    return m
+
+
+def strand(name, pts, r0, r1, mat):
+    """A tendon-like strand along pts (a smooth curve), tapering from radius r0 to r1."""
+    cu = bpy.data.curves.new(name, 'CURVE')
+    cu.dimensions = '3D'
+    cu.bevel_depth, cu.bevel_resolution, cu.resolution_u = 1.0, 3, 8
+    sp = cu.splines.new('NURBS')
+    sp.points.add(len(pts) - 1)
+    for i, p in enumerate(pts):
+        sp.points[i].co = (*p, 1.0)
+        u = i / max(1, len(pts) - 1)
+        sp.points[i].radius = r0 + (r1 - r0) * u
+    sp.use_endpoint_u = True
+    sp.order_u = min(4, len(pts))
+    o = bpy.data.objects.new(name, cu)
+    bpy.context.scene.collection.objects.link(o)
+    cu.materials.append(mat)
+    return o
+
+
 def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_tilt=0.0, reach=0.0, seed=7):
-    """The Occupant, ITEM 20 on: same tall, stooped, faceless shape as figure(), but built for realism:
-    emaciated torso with a narrow waist and hip bones, a ridge of vertebrae and shoulder blades on the
-    hunched back, knobbly elbows/knees on thin limbs, jointed fingers, an elongated skull with a jaw line
-    but no face, mottled waxy skin with sinew displacement. Asymmetric: one shoulder lower, one arm a
-    little forward, the head cocked. Mostly meant to be read in silhouette."""
+    """The Occupant, ITEM 20 on. Made to look *wrong*, not just tall:
+    - asymmetric: the right arm is far too long, with an extra joint, and drags its fingers near the floor;
+      the left arm is short and folded up against the chest
+    - the spine leans to one side and the torso is twisted; one shoulder is much higher
+    - a neck that is too long, bending sideways, so the faceless skull hangs beside the shoulder
+    - the left knee bends a little the wrong way; long, uneven feet
+    - ribs and vertebrae standing out; stringy: loose tendon strands run over the limbs and bridge the gaps
+      (armpit to ribs, between the legs), some hang free, and the skin is patches with seams between them,
+      as if it had been pieced together
+    Mostly meant to be read in silhouette."""
     rnd = random.Random(seed)
     k = height / 2.25
     V, E, R = [], [], []
+    lean, twist = 0.12, 0.25            # spine leans to +x, torso turned
 
-    def bend(p, pz=1.18, amt=None):
-        amt = stoop if amt is None else amt
+    def spine(p):
+        """Hunch forward above the waist, lean sideways, twist the chest."""
         x, y, z = p
-        if z <= pz:
-            return p
-        dy, dz = y - 0.015, z - pz
-        return (x, 0.015 + dy * math.cos(amt) - dz * math.sin(amt), pz + dy * math.sin(amt) + dz * math.cos(amt))
+        if z > 1.15:
+            u = (z - 1.15)
+            dy, dz = y - 0.015, z - 1.15
+            y = 0.015 + dy * math.cos(stoop) - dz * math.sin(stoop)
+            z = 1.15 + dy * math.sin(stoop) + dz * math.cos(stoop)
+            x = x + lean * u
+            c, s_ = math.cos(twist * min(1, u / 0.6)), math.sin(twist * min(1, u / 0.6))
+            x, y = x * c - y * s_, x * s_ + y * c
+        return (x, y, z)
 
     def v(p, r, parent=None):
         V.append(p); R.append(r if isinstance(r, tuple) else (r, r))
         if parent is not None:
             E.append((parent, len(V) - 1))
         return len(V) - 1
+    P = lambda i: (V[i], R[i][0])     # chain points carry the limb radius, so strands sit on the surface
 
-    # torso: barrel ribcage, pinched waist, narrow bony pelvis
     pel = v((0, 0.0, 1.0), (0.1, 0.07))
-    waist = v((0, 0.012, 1.14), (0.075, 0.06), pel)
-    rib0 = v(bend((0, 0.0, 1.28)), (0.12, 0.09), waist)
-    rib1 = v(bend((0, -0.02, 1.42)), (0.165, 0.115), rib0)
-    rib2 = v(bend((0, -0.025, 1.56)), (0.19, 0.125), rib1)
-    back = v(bend((0, 0.025, 1.68)), (0.15, 0.115), rib2)
-    neck0 = v(bend((0, -0.07, 1.76)), 0.05, back)
-    neck1 = v(bend((0, -0.16, 1.81)), 0.04, neck0)
-    neck2 = v(bend((0, -0.22, 1.83)), 0.036, neck1)
-    a_sw = [-1.25 * reach - 0.12, -1.25 * reach + 0.05]       # the left arm hangs a little forward
-    for side, sx in enumerate((-1, 1)):
-        drop = 0.07 if sx < 0 else 0.0
-        trap = v(bend((sx * 0.12, -0.01, 1.75 - drop * 0.4)), 0.06, back)      # trapezius slope
-        clav = v(bend((sx * 0.19, -0.035, 1.72 - drop * 0.7)), 0.05, trap)
-        sh = v(bend((sx * 0.25, -0.035, 1.67 - drop)), 0.068, clav)            # deltoid
-        a = a_sw[side]
-
-        def arm(p, sy=-0.035, sz=1.67 - drop):
-            x, y, z = p
-            dy, dz = y - sy, z - sz
-            bx, by, bz = bend((0, sy, sz))
-            return (x, by + dy * math.cos(a) - dz * math.sin(a), bz + dy * math.sin(a) + dz * math.cos(a))
-        z = lambda h: h - drop
-        up = v(arm((sx * 0.27, -0.04, z(1.5))), 0.052, sh)
-        up2 = v(arm((sx * 0.275, -0.05, z(1.32))), 0.036, up)
-        el = v(arm((sx * 0.28, -0.06, z(1.18))), 0.042, up2)          # knobbly elbow
-        fa = v(arm((sx * 0.285, -0.08, z(1.05))), 0.044, el)           # forearm muscle
-        fa2 = v(arm((sx * 0.29, -0.1, z(0.88))), 0.028, fa)
-        wr = v(arm((sx * 0.29, -0.12, z(0.75))), 0.027, fa2)           # bony wrist
-        palm = v(arm((sx * 0.29, -0.135, z(0.66))), (0.034, 0.015), wr)
-        for j, (dx, ln) in enumerate(((-0.032, 0.85), (-0.011, 1.0), (0.011, 1.06), (0.031, 0.9))):
-            curl = 0.05 + 0.05 * rnd.random() + (0.04 if sx < 0 else 0.0)   # the forward hand grips a little
-            fan = dx * (1.0 + 0.4 * rnd.random())
-
-            def f(u, dy):     # u: 0 knuckle .. 1 tip along the finger
-                return arm((sx * 0.29 + dx + fan * 0.6 * u, -0.14 - dy, z(0.58 - 0.29 * ln * u)))
-            k1 = v(f(0.0, 0.0), 0.012, palm)
-            k1b = v(f(0.3, curl * 0.15), 0.008, k1)
-            k2 = v(f(0.5, curl * 0.45), 0.0095, k1b)
-            k2b = v(f(0.72, curl * 0.9), 0.007, k2)
-            k3 = v(f(0.85, curl * 1.3), 0.0075, k2b)
-            v(f(1.0, curl * 1.9), 0.004, k3)
-        th = v(arm((sx * 0.255, -0.17, z(0.61))), 0.011, palm)
-        th2 = v(arm((sx * 0.24, -0.2, z(0.55))), 0.008, th)
-        v(arm((sx * 0.235, -0.23, z(0.5))), 0.005, th2)
-        # legs: gaunt but with mass at the top of the thigh and the calf; knees bigger than the shin
-        fwd = -0.06 if sx < 0 else 0.03
-        hip = v((sx * 0.08, 0.0, 0.95), 0.06, pel)
+    waist = v((0, 0.012, 1.13), (0.062, 0.05), pel)                  # very pinched
+    rib0 = v(spine((0, 0.0, 1.28)), (0.115, 0.085), waist)
+    rib1 = v(spine((0, -0.02, 1.42)), (0.155, 0.11), rib0)
+    rib2 = v(spine((0, -0.025, 1.56)), (0.175, 0.12), rib1)
+    back = v(spine((0, 0.025, 1.68)), (0.14, 0.11), rib2)
+    # a neck that's too long, curling down and to the side
+    n0 = v(spine((0.02, -0.06, 1.76)), 0.045, back)
+    n1 = v(spine((0.07, -0.15, 1.8)), 0.036, n0)
+    n2 = v(spine((0.11, -0.23, 1.78)), 0.034, n1)
+    n3 = v(spine((0.14, -0.29, 1.71)), 0.033, n2)
+    n4 = v(spine((0.16, -0.32, 1.63)), 0.032, n3)
+    chains = {}
+    # --- right arm (sx=+1): too long, high shoulder, an extra joint, fingers dragging
+    sx = 1
+    trap = v(spine((0.12, -0.01, 1.78)), 0.055, back)
+    clav = v(spine((0.2, -0.035, 1.76)), 0.045, trap)
+    sh = v(spine((0.27, -0.035, 1.73)), 0.062, clav)
+    r_pts = [(0.31, -0.06, 1.52, 0.046), (0.32, -0.07, 1.34, 0.03), (0.33, -0.08, 1.2, 0.04),      # elbow
+             (0.34, -0.1, 1.04, 0.036), (0.345, -0.1, 0.9, 0.026), (0.35, -0.11, 0.78, 0.036),      # second elbow
+             (0.36, -0.12, 0.6, 0.03), (0.365, -0.13, 0.45, 0.022), (0.37, -0.14, 0.36, 0.024)]     # wrist
+    prev, chain = sh, [P(sh)]
+    for x, y, z, r in r_pts:
+        prev = v(spine((x, y, z)) if z > 1.15 else (x + lean * 0.3, y, z), r, prev)
+        chain.append(P(prev))
+    chains["r_arm"] = chain
+    palm = v((0.37 + lean * 0.3, -0.15, 0.28), (0.034, 0.014), prev)
+    for j, (dx, ln) in enumerate(((-0.035, 0.75), (-0.012, 1.0), (0.012, 1.25), (0.034, 0.9))):   # uneven fingers
+        curl = 0.03 + 0.05 * rnd.random()
+        bx, by, bz = V[palm]
+        f = lambda u, dy: (bx + dx + dx * 0.5 * u, by - 0.01 - dy, bz - 0.06 - 0.26 * ln * u)
+        p_ = v(f(0.0, 0.0), 0.011, palm)
+        for u, rr in ((0.3, 0.007), (0.5, 0.009), (0.72, 0.0065), (0.86, 0.007), (1.0, 0.004)):
+            p_ = v(f(u, curl * u * 1.6), rr, p_)
+    th = v((V[palm][0] - 0.03, -0.19, 0.25), 0.01, palm); v((V[palm][0] - 0.04, -0.22, 0.19), 0.006, th)
+    # --- left arm (sx=-1): short, low shoulder, folded up against the chest, fingers curled in
+    trapL = v(spine((-0.12, -0.01, 1.7)), 0.05, back)
+    shL = v(spine((-0.24, -0.04, 1.6)), 0.058, trapL)
+    upL = v(spine((-0.27, -0.09, 1.44)), 0.04, shL)
+    elL = v(spine((-0.26, -0.12, 1.3)), 0.042, upL)                    # elbow tucked to the ribs
+    faL = v(spine((-0.16, -0.2, 1.36)), 0.035, elL)
+    wrL = v(spine((-0.06, -0.22, 1.47)), 0.024, faL)                   # hand held at the chest
+    chains["l_arm"] = [P(shL), P(upL), P(elL), P(faL), P(wrL)]
+    palmL = v(spine((-0.02, -0.23, 1.52)), (0.03, 0.013), wrL)
+    for dx in (-0.03, -0.01, 0.01, 0.03):
+        bx, by, bz = V[palmL]
+        p_ = v((bx + dx, by - 0.02, bz + 0.06), 0.009, palmL)
+        p_ = v((bx + dx * 1.2, by - 0.06, bz + 0.09), 0.007, p_)
+        p_ = v((bx + dx * 1.2, by - 0.09, bz + 0.05), 0.006, p_)
+        v((bx + dx, by - 0.08, bz + 0.0), 0.004, p_)                   # curled back on itself
+    # --- legs
+    for sx, wrong in ((-1, True), (1, False)):
+        fwd = -0.05 if sx < 0 else 0.04
+        hip = v((sx * 0.08, 0.0, 0.95), 0.055, pel)
         v((sx * 0.105, -0.03, 1.03), 0.024, pel)                       # hip bone point
-        th_ = v((sx * 0.095, -0.01 + fwd * 0.3, 0.82), 0.075, hip)
-        th2_ = v((sx * 0.1, -0.03 + fwd * 0.6, 0.66), 0.048, th_)
-        kn = v((sx * 0.1, -0.07 + fwd, 0.55), 0.052, th2_)
-        calf = v((sx * 0.1, -0.005 + fwd, 0.43), 0.055, kn)
-        sh_ = v((sx * 0.1, 0.01 + fwd, 0.25), 0.034, calf)
-        an = v((sx * 0.1, 0.02 + fwd, 0.1), 0.025, sh_)
-        heel = v((sx * 0.1, 0.045 + fwd, 0.03), 0.03, an)
-        toe = v((sx * 0.105, -0.07 + fwd, 0.025), (0.032, 0.016), heel)
-        v((sx * 0.11, -0.16 + fwd, 0.015), (0.028, 0.01), toe)
+        th_ = v((sx * 0.095, -0.01, 0.82), 0.07, hip)
+        th2 = v((sx * 0.1, -0.03, 0.66), 0.044, th_)
+        kn = v((sx * 0.1, (0.05 if wrong else -0.07) + fwd, 0.55), 0.05, th2)   # the left knee bends back
+        calf = v((sx * 0.1, (0.0 if wrong else -0.005) + fwd, 0.42), 0.05, kn)
+        sh_ = v((sx * 0.1, 0.02 + fwd, 0.25), 0.032, calf)
+        an = v((sx * 0.1, 0.03 + fwd, 0.1), 0.024, sh_)
+        heel = v((sx * 0.1, 0.05 + fwd, 0.03), 0.028, an)
+        flen = 0.2 if wrong else 0.15
+        toe = v((sx * 0.105, -0.06 + fwd, 0.025), (0.03, 0.015), heel)
+        v((sx * 0.11, -flen + fwd, 0.012), (0.024, 0.009), toe)
+        chains["l_leg" if sx < 0 else "r_leg"] = [P(hip), P(th_), P(th2), P(kn), P(calf), P(sh_), P(an)]
+    chains["spine"] = [P(pel), P(waist), P(rib0), P(rib1), P(rib2), P(back), P(n0), P(n1), P(n2), P(n3), P(n4)]
+
     me = bpy.data.meshes.new("occ")
     me.from_pydata([(x * k, y * k, z * k) for x, y, z in V], E, [])
     body = bpy.data.objects.new("occ", me)
     bpy.context.scene.collection.objects.link(body)
     body.modifiers.new("skin", 'SKIN')
     sub = body.modifiers.new("sub", 'SUBSURF'); sub.levels = 2; sub.render_levels = 3
-    sinew = bpy.data.textures.new("sinew", 'STUCCI'); sinew.noise_scale = 0.05; sinew.turbulence = 2.0
-    d1 = body.modifiers.new("sinew", 'DISPLACE'); d1.texture = sinew; d1.strength = 0.004 * k; d1.mid_level = 0.5
-    lumps = bpy.data.textures.new("lumps2", 'CLOUDS'); lumps.noise_scale = 0.2
-    d2 = body.modifiers.new("lumps", 'DISPLACE'); d2.texture = lumps; d2.strength = 0.005 * k; d2.mid_level = 0.5
+    sinew_t = bpy.data.textures.new("sinew", 'STUCCI'); sinew_t.noise_scale = 0.035; sinew_t.turbulence = 4.0
+    d1 = body.modifiers.new("sinew", 'DISPLACE'); d1.texture = sinew_t; d1.strength = 0.007 * k; d1.mid_level = 0.5
+    lumps = bpy.data.textures.new("lumps2", 'CLOUDS'); lumps.noise_scale = 0.15
+    d2 = body.modifiers.new("lumps", 'DISPLACE'); d2.texture = lumps; d2.strength = 0.008 * k; d2.mid_level = 0.5
     for i, (rx, ry) in enumerate(R):
         sv = me.skin_vertices[0].data[i]
         sv.radius = (rx * k, ry * k)
         sv.use_root = (i == pel)
-    skin = mat_skin()
+    skin, tissue = mat_skin(), mat_sinew()
     body.data.materials.append(skin)
     parts = [body]
 
-    def blob(name, p, scale, rot=(0, 0, 0), segs=24):
+    def blob(name, p, scale, rot=(0, 0, 0), segs=24, mat=skin):
         x, y, z_ = p
         bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(x * k, y * k, z_ * k), segments=segs, ring_count=segs // 2)
         o = bpy.context.object
         o.name = name
         o.scale = tuple(c * k for c in scale)
         o.rotation_euler = rot
-        o.data.materials.append(skin)
+        o.data.materials.append(mat)
         bpy.ops.object.shade_smooth()
         parts.append(o)
         return o
-    # vertebrae standing out along the hunched back, and the shoulder blades
-    for i in range(11):
-        u = i / 10
-        zc = 1.18 + u * 0.56
-        yb = 0.075 + 0.04 * math.sin(u * math.pi)
-        blob("vert", bend((0, yb, zc)), (0.018, 0.016, 0.014), rot=(stoop * min(1, u * 2), 0, 0), segs=12)
-    for sx in (-1, 1):
-        drop = 0.07 if sx < 0 else 0.0
-        blob("scapula", bend((sx * 0.1, 0.095, 1.6 - drop * 0.6)), (0.065, 0.018, 0.085), rot=(stoop * 0.9, 0, sx * 0.25))
-    # the head: an elongated skull hanging off the neck, no face
-    # (hung low and forward, crown first: from in front you see the top and back of the skull, never a face)
-    hx, hy, hz = bend((0.02, -0.3, 1.87))
-    tilt = 0.92 + stoop + head_tilt
-    blob("skull", (hx, hy, hz), (0.085, 0.11, 0.15), rot=(tilt, 0.38, 0), segs=40)
+    # vertebrae along the hunched back, shoulder blades, and ribs showing on the flanks
+    for i in range(12):
+        u = i / 11
+        blob("vert", spine((0, 0.07 + 0.045 * math.sin(u * math.pi), 1.16 + u * 0.56)), (0.018, 0.016, 0.014), segs=12)
+    blob("scapula", spine((0.11, 0.095, 1.62)), (0.065, 0.018, 0.085), rot=(stoop * 0.9, 0, 0.3))
+    blob("scapula", spine((-0.1, 0.09, 1.55)), (0.06, 0.018, 0.08), rot=(stoop * 0.9, 0, -0.2))
+    for i in range(5):
+        z_ = 1.3 + i * 0.06
+        for sx in (-1, 1):
+            blob("rib", spine((sx * (0.13 + 0.02 * math.sin(i)), -0.03, z_)), (0.012, 0.075, 0.01),
+                 rot=(0.3, 0, sx * 0.25), segs=12)
+    # the skull hangs at the end of the bent neck, crown toward you
+    a3, a4 = V[n3], V[n4]
+    dvec = [a4[c] - a3[c] for c in range(3)]
+    dl = math.sqrt(sum(c * c for c in dvec)) or 1
+    hc = tuple(a4[c] + dvec[c] / dl * 0.1 for c in range(3))          # continues on from the end of the neck
+    blob("skull", hc, (0.075, 0.1, 0.14), rot=(1.9 + head_tilt, 0.5, 0.3), segs=40)
     for o in parts[1:]:
-        dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.006 * k; dm.mid_level = 0.5
+        dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.005 * k; dm.mid_level = 0.5
+
+    # stringy tissue: strands along the limbs, bridging the gaps, a few hanging loose
+    def jitter(p, a):
+        return (p[0] + rnd.uniform(-a, a), p[1] + rnd.uniform(-a, a), p[2] + rnd.uniform(-a, a))
+
+    def along(chain, n_pts=5, off=0.03):
+        ang = rnd.uniform(0, 2 * math.pi)
+        i0 = rnd.randrange(0, len(chain) - 2)
+        i1 = min(len(chain) - 1, i0 + rnd.randint(2, 4))
+        pts = []
+        for t in range(n_pts):
+            u = t / (n_pts - 1)
+            fi = i0 + (i1 - i0) * u
+            (a, ra), (b_, rb) = chain[int(fi)], chain[min(len(chain) - 1, int(fi) + 1)]
+            w = fi - int(fi)
+            q = tuple(a[c] + (b_[c] - a[c]) * w for c in range(3))
+            r = (ra + (rb - ra) * w) * 1.05 + math.sin(u * math.pi) * off      # out on the skin, lifting off it mid-way
+            pts.append(jitter((q[0] + r * math.cos(ang), q[1] + r * math.sin(ang), q[2]), 0.004))
+        return pts
+    strands = []
+    for name, chain in chains.items():
+        for _ in range({"spine": 7, "r_arm": 9, "l_arm": 4, "l_leg": 6, "r_leg": 6}[name]):
+            pts = along(chain, 5, 0.015 if name != "spine" else 0.03)
+            strands.append(strand("tendon", [tuple(c * k for c in p) for p in pts],
+                                  rnd.uniform(0.007, 0.016) * k, rnd.uniform(0.003, 0.008) * k, tissue))
+    bridges = [(chains["r_arm"][1], chains["spine"][3]), (chains["r_arm"][2], chains["spine"][4]),
+               (chains["l_arm"][2], chains["spine"][2]), (chains["l_leg"][2], chains["r_leg"][2]),
+               (chains["l_leg"][1], chains["r_leg"][3]), (chains["spine"][8], chains["r_arm"][0])]
+    for (a_, _), (b_, _) in bridges:     # webbing across the gaps
+        for _ in range(rnd.randint(1, 3)):
+            mid = tuple((a_[c] + b_[c]) / 2 for c in range(3))
+            sag = (mid[0], mid[1] - 0.02, mid[2] - rnd.uniform(0.03, 0.09))
+            pts = [jitter(a_, 0.02), jitter(sag, 0.02), jitter(b_, 0.02)]
+            strands.append(strand("web", [tuple(c * k for c in p) for p in pts],
+                                  rnd.uniform(0.005, 0.01) * k, rnd.uniform(0.003, 0.007) * k, tissue))
+    for chain in (chains["r_arm"], chains["spine"], chains["l_leg"]):   # loose ends hanging down
+        for _ in range(3):
+            q, r = chain[rnd.randrange(1, len(chain))]
+            ang = rnd.uniform(0, 2 * math.pi)
+            p0 = jitter((q[0] + r * math.cos(ang), q[1] + r * math.sin(ang), q[2]), 0.01)
+            ln = rnd.uniform(0.08, 0.25)
+            pts = [p0, (p0[0] + rnd.uniform(-0.02, 0.02), p0[1] - 0.01, p0[2] - ln * 0.5),
+                   (p0[0] + rnd.uniform(-0.03, 0.03), p0[1], p0[2] - ln)]
+            strands.append(strand("loose", [tuple(c * k for c in p) for p in pts],
+                                  rnd.uniform(0.005, 0.009) * k, 0.001 * k, tissue))
+    parts += strands
+
     bpy.ops.object.empty_add(location=loc)
     root = bpy.context.object
     for o in parts:
