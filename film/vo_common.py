@@ -33,7 +33,7 @@ def words(s):
     s = re.sub(r"\d+", lambda m: " " + say(m.group()) + " ", s.lower().replace("'", ""))
     s = re.sub(r"\ba+nd\b", "and", s)
     for a, b in (("dunno", "dont know"), ("gonna", "going to"), ("wanna", "want to"), ("em", "them"), ("all right", "alright"),
-                 ("for", "four"), ("to", "two"), ("too", "two"), ("won", "one"), ("ate", "eight")):   # homophones
+                 ("for", "four"), ("to", "two"), ("too", "two"), ("won", "one"), ("ate", "eight"), ("zero", "oh")):   # homophones
         s = re.sub(rf"\b{a}\b", b, s)
     w = [x for x in re.sub(r"[^a-z ]", " ", s).split() if x not in ("uh", "um", "er")]
     return [x for i, x in enumerate(w) if i == 0 or x != w[i - 1]]
