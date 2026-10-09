@@ -104,7 +104,7 @@ Chatterbox (MIT), Kokoro (Apache-2.0), and the renders and sound effects made fo
 # ITEM 15: SPACE AVAILABLE
 
 - **Video:** `renders/item15_youtube.mp4` (4:26). **Thumbnail:** `renders/thumbnails/item15_panel.png`
-- **Title:** `ITEM 15` (alternatives: *space available*, *priced to move*, *555-0141*)
+- **Title:** `lots of potential` (alternatives: *555-0141*, *it's the one you want*, *twelve offices*)
 
 ```
 COULEE COUNTY SHERIFF'S DEPARTMENT
@@ -113,7 +113,16 @@ EVIDENCE ITEM 15
 One (1) VHS cassette recovered from the offices of Coulee Commercial
 Realty, April 2, 1996. Found in a drawer labeled "BRENNER - DO NOT SHOW".
 
-space available.
+Four floors. Forty thousand square feet.
+Call any time.
+
+00:00 ▮
+00:23 1
+01:07 2
+01:27 3
+02:18 the corner office
+03:24 2:11
+03:54 ▮
 
 —
 
@@ -123,6 +132,9 @@ Sound effects: Freesound contributors, CC0.
 
 #analoghorror #foundfootage #vhs
 ```
+
+Chapter times come from `item15/edit.py`. Same settings as ITEM 14: altered/synthetic content **Yes**,
+not made for kids, Film & Animation.
 
 ITEM 15 contains no RAVDESS or LibriTTS audio: Gary is Dia-1.6B (Apache 2.0) with Chatterbox voice
 conversion (MIT), so it's clear for monetization.
