@@ -5,8 +5,7 @@ so the time in the LIVE tag jumps between parts."""
 import build as B
 from build import (Segment, bed, blue_frames, card_frames, seq_frames, static_frames, still_frames, steps,
                    flicker, gate_from_schedule, SERIF, FPS)
-from timing import count_walk
-from item20.timing import SHOT_LEN, DENNY_COUNT
+from item20.timing import SHOT_LEN, DENNY_COUNT, count_times
 from item20 import graphics as G
 
 T = lambda h, m, s=0: h * 3600 + m * 60 + s
@@ -81,7 +80,7 @@ def film():
     c = T(1, 58, 3)
     g = DENNY_COUNT
     hold = 3.5
-    times = count_walk(g["n"], g["y0"], g["speed"])
+    times = count_times()
     cues = [(0.4, "D07", 1.0)]
     for k, tt in enumerate(times):
         cues.append((hold + tt - 0.2, f"C{k + 1:02d}", 1.0))

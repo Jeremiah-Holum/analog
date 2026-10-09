@@ -12,10 +12,10 @@ from timing import FPS, count_walk
 ROOT = s1.ROOT
 TEX = s1.TEX
 
-from item20.timing import DENNY_COUNT, SHOT_LEN, N_DOORS
+from item20.timing import DENNY_COUNT, SHOT_LEN, N_DOORS, GLANCE, count_times, plaque_y
 
 # Power's back on for the broadcast, mostly. Nine troffers down the hall.
-MODES = ["ok", "ok", "bad", "ok", "ok", "dying", "ok", "bad", "dying"]
+MODES = ["ok", "dying", "bad", "dead", "ok", "dying", "dead", "bad", "dying"]
 
 
 def hall14(M, modes=None, **kw):
@@ -34,6 +34,24 @@ def cam_light(cam, energy=60.0):
     o.parent = cam
     o.location = (0.0, 0.12, 0.05)
     return d
+
+
+def smooth(u):
+    u = min(1.0, max(0.0, u))
+    return u * u * (3 - 2 * u)
+
+
+def add_bob(cam, f0, f1, amp=0.016):
+    """Footsteps: a vertical bob at step rate and a slower side-to-side sway, eased in and out."""
+    for fc in cam.animation_data.action.fcurves:
+        if fc.data_path == "location" and fc.array_index in (0, 2):
+            m = fc.modifiers.new('FNGENERATOR')
+            m.function_type, m.use_additive = 'SIN', True
+            hz = 1.8 if fc.array_index == 2 else 0.9
+            m.amplitude = amp if fc.array_index == 2 else amp * 0.8
+            m.phase_multiplier = 2 * math.pi * hz / FPS
+            m.use_restricted_range = True
+            m.frame_start, m.frame_end, m.blend_in, m.blend_out = f0, f1, 12, 12
 
 
 def exit_glow(L, energy=2.5):
@@ -60,7 +78,8 @@ def n_open():
     key_cam(cam, 1, (0.05, -1.25, 1.62), (0, 14, 1.4))
     key_cam(cam, 80, (0.05, -1.1, 1.62), (0.1, 14, 1.42))
     key_cam(cam, n, (0.1, 0.9, 1.62), (0.2, 14, 1.35))
-    kit.handheld(cam, 0.8, walking=True)
+    kit.handheld(cam, 0.7)
+    add_bob(cam, 80, n)
     s1.animate_all(fx, n)
     return ("anim", n)
 
@@ -86,11 +105,46 @@ def n_hall(dim):
 
 # ------------------------------------------------------------------ 1:58 AM, the count
 def n_count():
+    """He walks and reads the plaques like a person: uneven pace, slowing at each one, eased glances (some only
+    half a look), a stall at 310, footsteps in the camera."""
     sc = kit.reset(203); M = kit.Mats()
     L, fx, _ = hall14(M)
     g = DENNY_COUNT
-    n = s1.count_shot(g["n"], g["y0"], g["speed"], g["dur"], sc, fx, stop_y=g["stop_y"])
-    cam_light(sc.camera)
+    n = SHOT_LEN["n_count"]; s1.set_frames(sc, n)
+    times = count_times()
+    pts_t = [0.0] + times + [g["dur"]]
+    pts_y = [g["y0"]] + [plaque_y(i) - 1.3 for i in range(len(times))] + [g["stop_y"]]
+
+    def interp(t):
+        for j in range(len(pts_t) - 1):
+            if t <= pts_t[j + 1]:
+                u = (t - pts_t[j]) / max(1e-6, pts_t[j + 1] - pts_t[j])
+                return pts_y[j] + (pts_y[j + 1] - pts_y[j]) * u
+        return pts_y[-1]
+    y_lin = [interp(f / FPS) for f in range(n)]
+    k = int(0.9 * FPS)                                               # smooth: he eases in and out of each read
+    y = [sum(y_lin[min(n - 1, max(0, f + d))] for d in range(-k, k + 1)) / (2 * k + 1) for f in range(n)]
+    cam = kit.camera()
+    cam_light(cam)
+    for f in range(1, n + 1, 2):
+        t = (f - 1) / FPS
+        yy = float(y[f - 1])
+        ahead = (0.15 * math.sin(t * 0.3), yy + 7, 1.35 - 0.06 * math.sin(t * 0.5) - (0.1 if t > times[8] else 0.0))
+        tgt, W = [0.0, 0.0, 0.0], 0.0
+        for i, ti in enumerate(times):
+            side = -1 if i % 2 == 0 else 1
+            w = GLANCE[i] * (smooth((t - (ti - 0.75)) / 0.7) - smooth((t - (ti + 0.35)) / 0.9))
+            if w > 0:
+                p = (side * 1.1, plaque_y(i), 1.5)
+                for c in range(3):
+                    tgt[c] += w * p[c]
+                W += w
+        W = min(W, 1.0)
+        tgt = [tgt[c] + (1 - W) * ahead[c] for c in range(3)] if W < 1 else tgt
+        pos = (0.1 + 0.05 * math.sin(t * 0.7), yy, 1.6)
+        key_cam(cam, f, pos, tuple(tgt))
+    kit.handheld(cam, 0.6)
+    add_bob(cam, 1, n, 0.017)
     s1.animate_all(fx, n)
     return ("anim", n)
 
@@ -122,7 +176,8 @@ def n_approach():
     key_cam(cam, 40, (0.08, y0 + 0.3, 1.62), (0.0, L + 2, 1.35))
     key_cam(cam, n - 30, (0.05, y1, 1.6), (0.05, L + 1, 1.15))
     key_cam(cam, n, (0.05, y1 + 0.1, 1.6), (0.1, L + 1, 1.1))
-    kit.handheld(cam, 1.0, walking=True)
+    kit.handheld(cam, 0.8)
+    add_bob(cam, 30, n - 20, 0.015)
     outs = {i: int(n * (0.25 + 0.08 * (8 - i))) for i in range(9)}       # far ones die first, then behind him
     s1.animate_all(fx, n, {i: (lambda f, i=i: 0.0 if f >= outs[i] else None) for i in range(9)})
     exit_glow(L)
