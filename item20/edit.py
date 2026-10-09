@@ -56,8 +56,8 @@ def film():
 
     # 1:44 AM: the elevator opens on three
     c = T(1, 44, 12)
-    add(Segment("10_open", SHOT_LEN["n_open"] / FPS, seq("n_open"), "tv",
-                [(0.0, "ding", 0.5), (0.4, "elev_doors", 0.7), (0.9, "D01", 1.0)] + steps(5.0, 9.0, 1.6),
+    add(Segment("10_open", SHOT_LEN["n_open"] / FPS + 1.6, seq("n_open"), "tv",
+                [(0.0, "ding", 0.5), (0.4, "elev_doors", 0.7), (0.6, "D01", 1.0)] + steps(5.0, 9.0, 1.6),
                 hall, post=G.overlay(c, (*DENNY, 1.5, 8.5))))
     hs = flicker(201, 0.25, "n_hall_a", "n_hall_a")
     add(Segment("11_rule", 17, still(hs, 1.0, 2), "tv", [(1.2, "D02", 1.0), (11.0, "D03", 1.0)],
@@ -70,9 +70,9 @@ def film():
         if 27.0 <= t < 27.5 or 28.1 <= t < 29.4:
             return ("n_hall_b", 1.0)
         return ("n_hall_a", 1.0)
-    add(Segment("13_paul", 42, still(paul_s, 0.8, 3), "tv",
+    add(Segment("13_paul", 43.5, still(paul_s, 0.8, 3), "tv",
                 [(0.8, "D04", 1.0), (5.5, "I01", 1.0), (14.0, "D05", 1.0), (18.5, "I02", 1.0), (26.5, "I03", 1.0),
-                 (31.0, "hangup", 0.5), (31.2, "dialtone", 0.12), (35.0, "D06", 1.0)],
+                 (31.0, "hangup", 0.5), (31.2, "dialtone", 0.12), (34.2, "D06", 1.0)],
                 bed(0.012, 0.014, 0.006, buzz_gate=gate_from_schedule(paul_s, "n_hall_a")),
                 post=G.overlay(c, ("ON THE LINE: PAUL", "LA CROSSE", 5.0, 30.5))))
 
@@ -86,7 +86,7 @@ def film():
     for k, tt in enumerate(times):
         cues.append((hold + tt - 0.2, f"C{k + 1:02d}", 1.0))
     cues += [(hold + g["dur"] - 2.5, "D10", 1.0)] + steps(hold, hold + g["dur"] - 3.0, 1.7)
-    add(Segment("15_count", hold + g["dur"] + 4.0, seq("n_count", hold_first=hold), "tv", cues, hall,
+    add(Segment("15_count", hold + g["dur"] + 5.5, seq("n_count", hold_first=hold), "tv", cues, hall,
                 post=G.overlay(c, callin=True)))
 
     # 2:04 AM: Gary
@@ -101,12 +101,12 @@ def film():
 
     # 2:08 AM: knocking from the corner office
     c = T(2, 8, 2)
-    add(Segment("18_knock", 11, still(gs, 0.7, 5), "tv",
+    add(Segment("18_knock", 14, still(gs, 0.7, 5), "tv",
                 [(0.8, "knock_guard", 0.6), (2.6, "D13", 1.0), (6.2, "knock_guard", 0.8), (8.0, "D14", 1.0)],
                 bed(0.012, 0.01, 0.006, buzz_gate=gate_from_schedule(gs, "n_gary_a")), post=G.overlay(c)))
     add(Segment("19_approach", SHOT_LEN["n_approach"] / FPS, seq("n_approach"), "tv",
-                [(9.0, "D15", 1.0)] + steps(1.2, 12.0, 1.5), bed(0.012, 0.004, 0.006, "drone_low", 0.12),
-                post=G.overlay(c + 11)))
+                [(7.4, "D15", 1.0)] + steps(1.2, 12.0, 1.5), bed(0.012, 0.004, 0.006, "drone_low", 0.12),
+                post=G.overlay(c + 14)))
 
     # 2:10 AM: the door. The top light goes. In the red of the EXIT sign it is right there.
     c = T(2, 10, 31)

@@ -138,3 +138,31 @@ not made for kids, Film & Animation.
 
 ITEM 15 contains no RAVDESS or LibriTTS audio: Gary is Dia-1.6B (Apache 2.0) with Chatterbox voice
 conversion (MIT), so it's clear for monetization.
+
+---
+
+# ITEM 20: COULEE AFTER DARK
+
+- **Video:** `renders/item20_youtube.mp4` (4:50). Phone copy: `renders/item20.mp4`
+- **Title:** `please stand by` (alternatives: *555-0110*, *don't you get to ten*, *we'll be right back*)
+
+```
+COULEE COUNTY SHERIFF'S DEPARTMENT
+EVIDENCE ITEM 20
+
+One (1) VHS cassette. Off-air recording of Coulee Community Access,
+Channel 10, October 31 - November 1, 1997.
+Mailed to the Sheriff's Department. No return address.
+
+Lines are open.
+
+—
+
+This is a work of fiction. Voices are synthetic (AI text-to-speech).
+Voice: Dia-1.6B (Nari Labs, Apache 2.0) and Chatterbox (Resemble AI, MIT).
+Sound effects: Freesound contributors, CC0.
+
+#analoghorror #foundfootage #vhs
+```
+
+Same settings: altered/synthetic content **Yes**, not made for kids, Film & Animation.
