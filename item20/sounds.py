@@ -107,11 +107,36 @@ def click():
     return lowpass(x, 0.3) * 0.7
 
 
+def other_voice():
+    """Something counting along with Denny, half a beat ahead: his own count, lowered, close and dry, barely there.
+    E05..E14 from his C05..C14, and E15 from his final '...fifteen'."""
+    import subprocess
+    vo = os.path.join(project.OUT, "vo")
+    for k, src in [(f"E{i:02d}", f"C{i:02d}") for i in range(5, 15) if i != 10] + [("E15", "D16")]:
+        p = os.path.join(vo, src + ".wav")
+        if os.path.exists(p):
+            subprocess.run(["sox", p, os.path.join(OUT, k + ".wav"), "pitch", "-480", "tempo", "-s", "0.92",
+                            "highpass", "180", "lowpass", "3200", "reverb", "8", "20", "20", "gain", "-n", "-20"],
+                           check=True, capture_output=True)
+            print("wrote", k)
+
+
+def line_knock():
+    """The phone line after Gary hangs up stays open, and three knocks come down it."""
+    import subprocess
+    src = os.path.join(project.ROOT, "assets", "sfx", "knock_guard.wav")
+    subprocess.run(["sox", src, os.path.join(OUT, "line_knock.wav"), "highpass", "320", "lowpass", "3300",
+                    "overdrive", "6", "reverb", "30", "gain", "-n", "-14"], check=True, capture_output=True)
+    print("wrote line_knock")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for name, fn in (("bumper", bumper), ("bbs", bbs), ("dialtone", dialtone), ("hangup", click)):
         sfx.write(os.path.join(OUT, name + ".wav"), fn())
         print("wrote", name)
+    other_voice()
+    line_knock()
 
 
 if __name__ == "__main__":

@@ -84,6 +84,9 @@ def film():
     cues = [(0.4, "D07", 1.0)]
     for k, tt in enumerate(times):
         cues.append((hold + tt - 0.2, f"C{k + 1:02d}", 1.0))
+        if k + 1 >= 5 and k + 1 != 10:          # something counting with him, half a beat ahead. He never notices.
+            cues.append((hold + tt - 0.75, f"E{k + 1:02d}", 0.5 + 0.04 * (k - 4)))
+    cues.append((hold + times[-1] + 1.6, "E15", 0.75))
     cues += [(hold + g["dur"] - 2.5, "D10", 1.0)] + steps(hold, hold + g["dur"] - 3.0, 1.7)
     add(Segment("15_count", hold + g["dur"] + 5.5, seq("n_count", hold_first=hold), "tv", cues, hall,
                 post=G.overlay(c, callin=True)))
@@ -94,7 +97,7 @@ def film():
     gs = flicker(204, 0.4, "n_gary_a", "n_gary_b", quiet=[(0, 4)])
     add(Segment("17_gary", 34, still(gs, 0.7, 4), "tv",
                 [(0.6, "D11", 1.0), (4.5, "G01", 1.0), (11.0, "G02", 1.0), (18.0, "G03", 1.0),
-                 (24.0, "hangup", 0.5), (24.2, "dialtone", 0.12), (27.5, "D12", 1.0)],
+                 (24.0, "line_knock", 0.9), (27.5, "D12", 1.0), (31.0, "hangup", 0.5)],
                 bed(0.012, 0.01, 0.006, buzz_gate=gate_from_schedule(gs, "n_gary_a")),
                 post=G.overlay(c, ("ON THE LINE: GARY", "555-0141", 4.0, 24.0))))
 
