@@ -102,16 +102,17 @@ class Voicer:
             print(f"  {name} try{attempt} {time.time() - t:.0f}s voice={sim:.2f} pieces={len(iv)}", flush=True)
             if len(iv) != len(keys) or sim < SIM_OK - 0.06:
                 continue
-            ok, heard = True, []
+            whole = text_score(spoken(text), self.heard(cand))       # judge the take as a whole...
+            ok, heard = whole >= 0.85, []
             for (a, b), key, tx in zip(iv, keys, texts):
                 p = os.path.join(RAW, key + ".wav")
                 piece, _ = librosa.effects.trim(y[a:b], top_db=38)
                 sf.write(p, piece, sr)
                 h = self.heard(p)
                 heard.append(h)
-                if text_score(spoken(tx), h) < 0.8:
+                if text_score(spoken(tx), h) < 0.5:                   # ...and each piece only loosely (tiny clips mishear)
                     ok = False
-            print(f"    heard: {' | '.join(heard)}", flush=True)
+            print(f"    whole={whole:.2f} heard: {' | '.join(heard)}", flush=True)
             if ok:
                 for key in keys:
                     finish(os.path.join(RAW, key + ".wav"), key, style)
@@ -130,8 +131,15 @@ class Voicer:
         ws = [(head(w.word), w.start, w.end) for sg in segs for w in sg.words]
         first = head(spoken(texts[0]).split()[0])
         starts = [i for i, w in enumerate(ws) if w[0] == first]
-        if len(starts) != len(texts):
-            return []
+        if len(starts) != len(texts):     # fall back to the biggest pauses (the lines are said with '...' between)
+            y, _ = librosa.load(path, sr=sr)
+            iv = librosa.effects.split(y, top_db=30, frame_length=1024, hop_length=256)
+            if len(iv) < len(texts):
+                return []
+            gaps = sorted(range(len(iv) - 1), key=lambda i: iv[i + 1][0] - iv[i][1], reverse=True)[:len(texts) - 1]
+            cut = sorted(int((iv[i][1] + iv[i + 1][0]) / 2) for i in gaps)
+            bounds = [0] + cut + [n]
+            return [(bounds[k], bounds[k + 1]) for k in range(len(texts))]
         # cut just before each line's first word (Whisper's word starts run a little late), not mid-gap
         bounds = [0] + [int(max(ws[i - 1][2], ws[i][1] - 0.15) * sr) for i in starts[1:]] + [n]
         return [(bounds[k], bounds[k + 1]) for k in range(len(texts))]
