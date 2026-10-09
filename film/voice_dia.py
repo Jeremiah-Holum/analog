@@ -1,8 +1,8 @@
 """Voice pass 4: Dia-1.6B (Nari Labs). Run with the Dia venv:
     FILM=item15 /home/user/tts/dia/bin/python film/voice_dia.py [ids...]
 
-- every line continues from one take picked by ear (script.DIA_PROMPT: audio + its exact transcript),
-  so the voice stays the same person from line to line
+- every line continues from one take picked by ear (script.DIA_PROMPT: audio + its exact transcript,
+  or script.DIA_PROMPTS: one per style, for films with several voices), so each voice stays the same person
 - nonverbal cues in the text, e.g. (laughs), (clears throat), are performed by the model
 - each take is checked by Whisper (words) and by a speaker encoder (is it still the same man?);
   up to TRIES takes, best one kept
@@ -36,10 +36,18 @@ class Voicer:
         self.proc = AutoProcessor.from_pretrained(CK)
         self.model = DiaForConditionalGeneration.from_pretrained(CK, torch_dtype=torch.float32)
         self.asr = WhisperModel("small.en", device="cpu", compute_type="int8")
-        wav, text = _s.DIA_PROMPT
-        self.prompt, _ = librosa.load(os.path.join(ROOT, "out", "tts_ref", wav), sr=SR, mono=True)
+        self.cur = None
+
+    def use(self, style):
+        """Load the voice prompt for this style (paths with a / are relative to the repo, else out/tts_ref)."""
+        spec = getattr(_s, "DIA_PROMPTS", {}).get(style) or _s.DIA_PROMPT
+        if spec == self.cur:
+            return
+        wav, text = spec
+        self.prompt_path = os.path.join(ROOT, wav) if "/" in wav else os.path.join(ROOT, "out", "tts_ref", wav)
+        self.prompt, _ = librosa.load(self.prompt_path, sr=SR, mono=True)
         self.prompt_text = text
-        self.prompt_path = os.path.join(ROOT, "out", "tts_ref", wav)
+        self.cur = spec
 
     def sim(self, path):
         r = subprocess.run([CB_PY, os.path.join(ROOT, "film", "spk_sim.py"), self.prompt_path, path],
@@ -76,6 +84,7 @@ class Voicer:
     def group(self, name, keys, texts, style):
         """Short lines said as one longer take (the voice holds better, and the take is long enough to
         voice-convert), then cut where each line starts. Used for the door counts."""
+        self.use(style)
         text = " ... ".join(texts)
         for attempt in range(TRIES + 2):
             cand = os.path.join(RAW, f"{name}_try.wav")
@@ -122,6 +131,7 @@ class Voicer:
         return [(bounds[k], bounds[k + 1]) for k in range(len(texts))]
 
     def line(self, key, style, text):
+        self.use(style)
         raw = os.path.join(RAW, key + ".wav")
         if key == getattr(_s, "DIA_USE_PROMPT", None):
             sf.write(raw, self.prompt, SR)

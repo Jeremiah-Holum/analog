@@ -156,6 +156,7 @@ STYLE = {
     "card": "gblur=sigma=0.8:sigmaV=0.4,rgbashift=rh=2:bh=-2,noise=alls=9:allf=t",
     "clean": "noise=alls=5:allf=t",
 }
+STYLE["tv"] = STYLE["cam"]   # a live camera feed seen off-air: camcorder look, but no lens bend on the graphics
 if REALCAM:   # a cheap camcorder lens: slight barrel distortion
     STYLE["cam"] = "lenscorrection=k1=-0.08:k2=0.01:i=bilinear," + STYLE["cam"]
 
@@ -208,9 +209,10 @@ def steps(t0, t1, rate=1.75, heavy=False, gain=0.35, jitter=0.05, fade_to=None):
 class Segment:
     """dur in seconds; frame(i, t) -> PIL 640x480; cues [(t, clip, gain)]; bed(n, rng) -> array"""
     def __init__(self, name, dur, frame, style="cam", cues=(), bed=None, glitches=(), tape_seed=0,
-                 damage=True, dropouts=0.12, af=()):
+                 damage=True, dropouts=0.12, af=(), post=None):
         self.name, self.dur, self.frame, self.style = name, dur, frame, style
-        self.realcam = REALCAM and style == "cam" and damage
+        self.realcam = REALCAM and style in ("cam", "tv") and damage
+        self.post = post      # post(img, t) -> img: graphics keyed over the camera (after exposure, before tape)
         self.af = [0.15] + list(af) if self.realcam else []   # autofocus hunts: at record start + given times
         self.cues, self.bed, self.glitches = list(cues), bed, list(glitches)
         self.tape = Tape(tape_seed or hash(name) % 10000)
@@ -283,6 +285,8 @@ class Segment:
                 r = sum(2.4 * math.exp(-((t - a) / 0.2) ** 2) * (0.55 + 0.45 * math.cos((t - a) * 30)) for a in self.af)
                 if r > 0.25:
                     img = img.filter(ImageFilter.GaussianBlur(r))
+            if self.post:
+                img = self.post(img, t)
             if self.damage:
                 img = self.tape.damage(img, t, self.glitch_at(t), dropouts=self.dropouts)
             p.stdin.write(img.tobytes())
