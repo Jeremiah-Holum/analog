@@ -24,6 +24,8 @@ def say(digits):
         return f"{num2words(n // 100)} oh {num2words(rest)}" if rest < 10 else f"{num2words(n // 100)} {num2words(rest)}"
     if len(digits) >= 4 and digits[0] == "0":
         return " ".join("oh" if c == "0" else num2words(int(c)) for c in digits)
+    if len(digits) == 4 and 1900 <= n < 2000:
+        return num2words(n, to="year")
     return num2words(n)
 
 
