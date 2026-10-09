@@ -15,7 +15,7 @@ from faster_whisper import WhisperModel
 from transformers import AutoProcessor, DiaForConditionalGeneration
 import importlib, project
 _s = importlib.import_module(project.SCRIPT)
-from vo_common import ROOT, OUT, RAW, text_score, finish
+from vo_common import ROOT, OUT, RAW, text_score, finish, words
 
 CK = "nari-labs/Dia-1.6B-0626"
 TRIES = int(os.environ.get("TRIES", 4))
@@ -124,8 +124,11 @@ class Voicer:
     def cuts(self, path, texts, n, sr):
         """Split a grouped take where each line's first word starts (Whisper word timestamps)."""
         segs = self.asr.transcribe(path, beam_size=3, word_timestamps=True)[0]
-        ws = [(re.sub(r"[^a-z']", "", w.word.lower()), w.start, w.end) for sg in segs for w in sg.words]
-        first = re.sub(r"[^a-z']", "", spoken(texts[0]).split()[0].lower())
+        def head(word):     # first spoken word, with digits read out ("301" -> "three")
+            ww = words(word)
+            return ww[0] if ww else ""
+        ws = [(head(w.word), w.start, w.end) for sg in segs for w in sg.words]
+        first = head(spoken(texts[0]).split()[0])
         starts = [i for i, w in enumerate(ws) if w[0] == first]
         if len(starts) != len(texts):
             return []
