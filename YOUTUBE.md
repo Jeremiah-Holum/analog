@@ -103,7 +103,7 @@ Chatterbox (MIT), Kokoro (Apache-2.0), and the renders and sound effects made fo
 
 # ITEM 15: SPACE AVAILABLE
 
-- **Video:** `renders/item15_youtube.mp4` (4:26). **Thumbnail:** `renders/thumbnails/item15_silhouette.png` (the blackout, straight from the tape) or `item15_panel.png`
+- **Video:** `renders/item15_youtube.mp4` (4:26). **Thumbnail:** `renders/thumbnails/item15_dark.png` (the blackout, straight from the tape, empty) or `item15_panel.png`
 - **Title:** `lots of potential` (alternatives: *555-0141*, *it's the one you want*, *twelve offices*)
 
 ```
