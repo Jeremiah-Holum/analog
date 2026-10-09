@@ -598,8 +598,11 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
             x, y = x * c - y * s_, x * s_ + y * c
         return (x, y, z)
 
-    def v(p, r, parent=None):
-        V.append(p); R.append(r if isinstance(r, tuple) else (r, r))
+    def v(p, r, parent=None, thin=0.8):
+        r = r if isinstance(r, tuple) else (r, r)
+        if len(V) > 9:            # everything past the torso is thinner: the strands make up the bulk
+            r = (r[0] * thin, r[1] * thin)
+        V.append(p); R.append(r)
         if parent is not None:
             E.append((parent, len(V) - 1))
         return len(V) - 1
@@ -612,20 +615,20 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
     rib2 = v(spine((0, -0.025, 1.56)), (0.175, 0.12), rib1)
     back = v(spine((0, 0.025, 1.68)), (0.14, 0.11), rib2)
     # a neck that's too long, curling down and to the side
-    n0 = v(spine((0.02, -0.06, 1.76)), 0.045, back)
-    n1 = v(spine((0.07, -0.15, 1.8)), 0.036, n0)
-    n2 = v(spine((0.11, -0.23, 1.78)), 0.034, n1)
-    n3 = v(spine((0.14, -0.29, 1.71)), 0.033, n2)
-    n4 = v(spine((0.16, -0.32, 1.63)), 0.032, n3)
+    n0 = v(spine((-0.02, -0.04, 1.78)), 0.042, back)
+    n1 = v(spine((-0.08, -0.08, 1.88)), 0.032, n0)
+    n2 = v(spine((-0.17, -0.1, 1.94)), 0.028, n1)
+    n3 = v(spine((-0.27, -0.11, 1.93)), 0.027, n2)
+    n4 = v(spine((-0.35, -0.12, 1.87)), 0.027, n3)
     chains = {}
     # --- right arm (sx=+1): too long, high shoulder, an extra joint, fingers dragging
     sx = 1
     trap = v(spine((0.12, -0.01, 1.78)), 0.055, back)
     clav = v(spine((0.2, -0.035, 1.76)), 0.045, trap)
     sh = v(spine((0.27, -0.035, 1.73)), 0.062, clav)
-    r_pts = [(0.31, -0.06, 1.52, 0.046), (0.32, -0.07, 1.34, 0.03), (0.33, -0.08, 1.2, 0.04),      # elbow
-             (0.34, -0.1, 1.04, 0.036), (0.345, -0.1, 0.9, 0.026), (0.35, -0.11, 0.78, 0.036),      # second elbow
-             (0.36, -0.12, 0.6, 0.03), (0.365, -0.13, 0.45, 0.022), (0.37, -0.14, 0.36, 0.024)]     # wrist
+    r_pts = [(0.31, -0.06, 1.52, 0.036), (0.32, -0.07, 1.34, 0.023), (0.33, -0.08, 1.2, 0.04),      # elbow
+             (0.34, -0.1, 1.04, 0.028), (0.345, -0.1, 0.9, 0.020), (0.35, -0.11, 0.78, 0.036),      # second elbow
+             (0.36, -0.12, 0.6, 0.023), (0.365, -0.13, 0.45, 0.017), (0.37, -0.14, 0.36, 0.024)]     # wrist
     prev, chain = sh, [P(sh)]
     for x, y, z, r in r_pts:
         prev = v(spine((x, y, z)) if z > 1.15 else (x + lean * 0.3, y, z), r, prev)
@@ -717,8 +720,8 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
     a3, a4 = V[n3], V[n4]
     dvec = [a4[c] - a3[c] for c in range(3)]
     dl = math.sqrt(sum(c * c for c in dvec)) or 1
-    hc = tuple(a4[c] + dvec[c] / dl * 0.1 for c in range(3))          # continues on from the end of the neck
-    blob("skull", hc, (0.075, 0.1, 0.14), rot=(1.9 + head_tilt, 0.5, 0.3), segs=40)
+    hc = tuple(a4[c] + dvec[c] / dl * 0.12 for c in range(3))          # continues on from the end of the neck
+    blob("skull", hc, (0.08, 0.1, 0.15), rot=(0.4 + head_tilt, -0.9, 0.2), segs=40)   # cocked, hanging sideways
     for o in parts[1:]:
         dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.005 * k; dm.mid_level = 0.5
 
@@ -742,26 +745,27 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
         return pts
     strands = []
     for name, chain in chains.items():
-        for _ in range({"spine": 7, "r_arm": 9, "l_arm": 4, "l_leg": 6, "r_leg": 6}[name]):
-            pts = along(chain, 5, 0.015 if name != "spine" else 0.03)
+        for _ in range({"spine": 16, "r_arm": 22, "l_arm": 10, "l_leg": 14, "r_leg": 14}[name]):
+            lift = rnd.choice([0.008, 0.015, 0.03, 0.05])        # some lie on the skin, some pull away from it
+            pts = along(chain, 6, lift if name != "spine" else lift * 1.6)
             strands.append(strand("tendon", [tuple(c * k for c in p) for p in pts],
-                                  rnd.uniform(0.007, 0.016) * k, rnd.uniform(0.003, 0.008) * k, tissue))
+                                  rnd.uniform(0.008, 0.02) * k, rnd.uniform(0.003, 0.009) * k, tissue))
     bridges = [(chains["r_arm"][1], chains["spine"][3]), (chains["r_arm"][2], chains["spine"][4]),
                (chains["l_arm"][2], chains["spine"][2]), (chains["l_leg"][2], chains["r_leg"][2]),
                (chains["l_leg"][1], chains["r_leg"][3]), (chains["spine"][8], chains["r_arm"][0])]
     for (a_, _), (b_, _) in bridges:     # webbing across the gaps
-        for _ in range(rnd.randint(1, 3)):
+        for _ in range(rnd.randint(2, 5)):
             mid = tuple((a_[c] + b_[c]) / 2 for c in range(3))
             sag = (mid[0], mid[1] - 0.02, mid[2] - rnd.uniform(0.03, 0.09))
             pts = [jitter(a_, 0.02), jitter(sag, 0.02), jitter(b_, 0.02)]
             strands.append(strand("web", [tuple(c * k for c in p) for p in pts],
                                   rnd.uniform(0.005, 0.01) * k, rnd.uniform(0.003, 0.007) * k, tissue))
-    for chain in (chains["r_arm"], chains["spine"], chains["l_leg"]):   # loose ends hanging down
-        for _ in range(3):
+    for chain in (chains["r_arm"], chains["spine"], chains["l_leg"], chains["l_arm"], chains["r_leg"]):   # loose ends
+        for _ in range(5):
             q, r = chain[rnd.randrange(1, len(chain))]
             ang = rnd.uniform(0, 2 * math.pi)
             p0 = jitter((q[0] + r * math.cos(ang), q[1] + r * math.sin(ang), q[2]), 0.01)
-            ln = rnd.uniform(0.08, 0.25)
+            ln = rnd.uniform(0.08, 0.35)
             pts = [p0, (p0[0] + rnd.uniform(-0.02, 0.02), p0[1] - 0.01, p0[2] - ln * 0.5),
                    (p0[0] + rnd.uniform(-0.03, 0.03), p0[1], p0[2] - ln)]
             strands.append(strand("loose", [tuple(c * k for c in p) for p in pts],
