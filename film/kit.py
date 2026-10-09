@@ -503,6 +503,164 @@ def figure(loc, height=3.17, facing=math.pi, reach=0.0, head_tilt=0.0, toward=No
     return root
 
 
+def mat_skin(name="skin_real", base=(0.032, 0.028, 0.026), dark=(0.009, 0.008, 0.008)):
+    """Ashen, mottled, slightly waxy skin: noise-mottled colour, subsurface, pores/wrinkles as bump."""
+    m, nt, b = _mat(name)
+    v = _coords(nt)
+    blotch = _noise(nt, v, 5.0, 8.0, 0.65)
+    col = _ramp_mix(nt, blotch, dark, base, 0.35, 0.68)
+    veins = _noise(nt, v, 38.0, 3.0, 0.5)
+    vcol = _ramp_mix(nt, veins, (0.6, 0.55, 0.55), (1, 1, 1), 0.45, 0.52)     # faint darker vein lines
+    nt.links.new(_multiply(nt, col, vcol), b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.5
+    b.inputs["Subsurface Weight"].default_value = 0.12
+    b.inputs["Subsurface Radius"].default_value = (0.5, 0.18, 0.12)
+    b.inputs["Subsurface Scale"].default_value = 0.02
+    b.inputs["Specular IOR Level"].default_value = 0.35
+    pores = _noise(nt, v, 220.0, 4.0, 0.7)
+    _bump(nt, b, pores, 0.12)
+    return m
+
+
+def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_tilt=0.0, reach=0.0, seed=7):
+    """The Occupant, ITEM 20 on: same tall, stooped, faceless shape as figure(), but built for realism:
+    emaciated torso with a narrow waist and hip bones, a ridge of vertebrae and shoulder blades on the
+    hunched back, knobbly elbows/knees on thin limbs, jointed fingers, an elongated skull with a jaw line
+    but no face, mottled waxy skin with sinew displacement. Asymmetric: one shoulder lower, one arm a
+    little forward, the head cocked. Mostly meant to be read in silhouette."""
+    rnd = random.Random(seed)
+    k = height / 2.25
+    V, E, R = [], [], []
+
+    def bend(p, pz=1.18, amt=None):
+        amt = stoop if amt is None else amt
+        x, y, z = p
+        if z <= pz:
+            return p
+        dy, dz = y - 0.015, z - pz
+        return (x, 0.015 + dy * math.cos(amt) - dz * math.sin(amt), pz + dy * math.sin(amt) + dz * math.cos(amt))
+
+    def v(p, r, parent=None):
+        V.append(p); R.append(r if isinstance(r, tuple) else (r, r))
+        if parent is not None:
+            E.append((parent, len(V) - 1))
+        return len(V) - 1
+
+    # torso: barrel ribcage, pinched waist, narrow bony pelvis
+    pel = v((0, 0.0, 1.0), (0.1, 0.07))
+    waist = v((0, 0.012, 1.14), (0.075, 0.06), pel)
+    rib0 = v(bend((0, 0.0, 1.28)), (0.12, 0.09), waist)
+    rib1 = v(bend((0, -0.02, 1.42)), (0.165, 0.115), rib0)
+    rib2 = v(bend((0, -0.025, 1.56)), (0.19, 0.125), rib1)
+    back = v(bend((0, 0.025, 1.68)), (0.15, 0.115), rib2)
+    neck0 = v(bend((0, -0.07, 1.76)), 0.05, back)
+    neck1 = v(bend((0, -0.16, 1.81)), 0.04, neck0)
+    neck2 = v(bend((0, -0.22, 1.83)), 0.036, neck1)
+    a_sw = [-1.25 * reach - 0.12, -1.25 * reach + 0.05]       # the left arm hangs a little forward
+    for side, sx in enumerate((-1, 1)):
+        drop = 0.07 if sx < 0 else 0.0
+        trap = v(bend((sx * 0.12, -0.01, 1.75 - drop * 0.4)), 0.06, back)      # trapezius slope
+        clav = v(bend((sx * 0.19, -0.035, 1.72 - drop * 0.7)), 0.05, trap)
+        sh = v(bend((sx * 0.25, -0.035, 1.67 - drop)), 0.068, clav)            # deltoid
+        a = a_sw[side]
+
+        def arm(p, sy=-0.035, sz=1.67 - drop):
+            x, y, z = p
+            dy, dz = y - sy, z - sz
+            bx, by, bz = bend((0, sy, sz))
+            return (x, by + dy * math.cos(a) - dz * math.sin(a), bz + dy * math.sin(a) + dz * math.cos(a))
+        z = lambda h: h - drop
+        up = v(arm((sx * 0.27, -0.04, z(1.5))), 0.052, sh)
+        up2 = v(arm((sx * 0.275, -0.05, z(1.32))), 0.036, up)
+        el = v(arm((sx * 0.28, -0.06, z(1.18))), 0.042, up2)          # knobbly elbow
+        fa = v(arm((sx * 0.285, -0.08, z(1.05))), 0.044, el)           # forearm muscle
+        fa2 = v(arm((sx * 0.29, -0.1, z(0.88))), 0.028, fa)
+        wr = v(arm((sx * 0.29, -0.12, z(0.75))), 0.027, fa2)           # bony wrist
+        palm = v(arm((sx * 0.29, -0.135, z(0.66))), (0.034, 0.015), wr)
+        for j, (dx, ln) in enumerate(((-0.032, 0.85), (-0.011, 1.0), (0.011, 1.06), (0.031, 0.9))):
+            curl = 0.05 + 0.05 * rnd.random() + (0.04 if sx < 0 else 0.0)   # the forward hand grips a little
+            fan = dx * (1.0 + 0.4 * rnd.random())
+
+            def f(u, dy):     # u: 0 knuckle .. 1 tip along the finger
+                return arm((sx * 0.29 + dx + fan * 0.6 * u, -0.14 - dy, z(0.58 - 0.29 * ln * u)))
+            k1 = v(f(0.0, 0.0), 0.012, palm)
+            k1b = v(f(0.3, curl * 0.15), 0.008, k1)
+            k2 = v(f(0.5, curl * 0.45), 0.0095, k1b)
+            k2b = v(f(0.72, curl * 0.9), 0.007, k2)
+            k3 = v(f(0.85, curl * 1.3), 0.0075, k2b)
+            v(f(1.0, curl * 1.9), 0.004, k3)
+        th = v(arm((sx * 0.255, -0.17, z(0.61))), 0.011, palm)
+        th2 = v(arm((sx * 0.24, -0.2, z(0.55))), 0.008, th)
+        v(arm((sx * 0.235, -0.23, z(0.5))), 0.005, th2)
+        # legs: gaunt but with mass at the top of the thigh and the calf; knees bigger than the shin
+        fwd = -0.06 if sx < 0 else 0.03
+        hip = v((sx * 0.08, 0.0, 0.95), 0.06, pel)
+        v((sx * 0.105, -0.03, 1.03), 0.024, pel)                       # hip bone point
+        th_ = v((sx * 0.095, -0.01 + fwd * 0.3, 0.82), 0.075, hip)
+        th2_ = v((sx * 0.1, -0.03 + fwd * 0.6, 0.66), 0.048, th_)
+        kn = v((sx * 0.1, -0.07 + fwd, 0.55), 0.052, th2_)
+        calf = v((sx * 0.1, -0.005 + fwd, 0.43), 0.055, kn)
+        sh_ = v((sx * 0.1, 0.01 + fwd, 0.25), 0.034, calf)
+        an = v((sx * 0.1, 0.02 + fwd, 0.1), 0.025, sh_)
+        heel = v((sx * 0.1, 0.045 + fwd, 0.03), 0.03, an)
+        toe = v((sx * 0.105, -0.07 + fwd, 0.025), (0.032, 0.016), heel)
+        v((sx * 0.11, -0.16 + fwd, 0.015), (0.028, 0.01), toe)
+    me = bpy.data.meshes.new("occ")
+    me.from_pydata([(x * k, y * k, z * k) for x, y, z in V], E, [])
+    body = bpy.data.objects.new("occ", me)
+    bpy.context.scene.collection.objects.link(body)
+    body.modifiers.new("skin", 'SKIN')
+    sub = body.modifiers.new("sub", 'SUBSURF'); sub.levels = 2; sub.render_levels = 3
+    sinew = bpy.data.textures.new("sinew", 'STUCCI'); sinew.noise_scale = 0.05; sinew.turbulence = 2.0
+    d1 = body.modifiers.new("sinew", 'DISPLACE'); d1.texture = sinew; d1.strength = 0.004 * k; d1.mid_level = 0.5
+    lumps = bpy.data.textures.new("lumps2", 'CLOUDS'); lumps.noise_scale = 0.2
+    d2 = body.modifiers.new("lumps", 'DISPLACE'); d2.texture = lumps; d2.strength = 0.005 * k; d2.mid_level = 0.5
+    for i, (rx, ry) in enumerate(R):
+        sv = me.skin_vertices[0].data[i]
+        sv.radius = (rx * k, ry * k)
+        sv.use_root = (i == pel)
+    skin = mat_skin()
+    body.data.materials.append(skin)
+    parts = [body]
+
+    def blob(name, p, scale, rot=(0, 0, 0), segs=24):
+        x, y, z_ = p
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(x * k, y * k, z_ * k), segments=segs, ring_count=segs // 2)
+        o = bpy.context.object
+        o.name = name
+        o.scale = tuple(c * k for c in scale)
+        o.rotation_euler = rot
+        o.data.materials.append(skin)
+        bpy.ops.object.shade_smooth()
+        parts.append(o)
+        return o
+    # vertebrae standing out along the hunched back, and the shoulder blades
+    for i in range(11):
+        u = i / 10
+        zc = 1.18 + u * 0.56
+        yb = 0.075 + 0.04 * math.sin(u * math.pi)
+        blob("vert", bend((0, yb, zc)), (0.018, 0.016, 0.014), rot=(stoop * min(1, u * 2), 0, 0), segs=12)
+    for sx in (-1, 1):
+        drop = 0.07 if sx < 0 else 0.0
+        blob("scapula", bend((sx * 0.1, 0.095, 1.6 - drop * 0.6)), (0.065, 0.018, 0.085), rot=(stoop * 0.9, 0, sx * 0.25))
+    # the head: an elongated skull hanging off the neck, no face
+    # (hung low and forward, crown first: from in front you see the top and back of the skull, never a face)
+    hx, hy, hz = bend((0.02, -0.3, 1.87))
+    tilt = 0.92 + stoop + head_tilt
+    blob("skull", (hx, hy, hz), (0.085, 0.11, 0.15), rot=(tilt, 0.38, 0), segs=40)
+    for o in parts[1:]:
+        dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.006 * k; dm.mid_level = 0.5
+    bpy.ops.object.empty_add(location=loc)
+    root = bpy.context.object
+    for o in parts:
+        o.parent = root
+    if toward is not None:
+        root.rotation_euler[2] = math.atan2(toward[0] - loc[0], -(toward[1] - loc[1]))
+    else:
+        root.rotation_euler[2] = facing - math.pi
+    return root
+
+
 def office(M, origin=(0, 0, 0)):
     """Dark open-plan office behind the end door. origin = doorway centre; room extends +y."""
     ox, oy, oz = origin
