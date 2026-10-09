@@ -63,18 +63,18 @@ def film():
     add(Segment("11_rule", 17, still(hs, 1.0, 2), "tv", [(1.2, "D02", 1.0), (11.0, "D03", 1.0)],
                 hall, post=G.overlay(c + 9, callin=True)))
 
-    # 1:51 AM: Irene
+    # 1:51 AM: Paul Voss, Harold's son
     add(pause("12_pause", 24))
     c = T(1, 51, 40)
-    def irene_s(t):     # the far lights drop out around "He got to ten." It's standing at the far end. Barely.
+    def paul_s(t):     # the far lights drop out around "He got to ten." It's standing at the far end. Barely.
         if 27.0 <= t < 27.5 or 28.1 <= t < 29.4:
             return ("n_hall_b", 1.0)
         return ("n_hall_a", 1.0)
-    add(Segment("13_irene", 42, still(irene_s, 0.8, 3), "tv",
+    add(Segment("13_paul", 42, still(paul_s, 0.8, 3), "tv",
                 [(0.8, "D04", 1.0), (5.5, "I01", 1.0), (14.0, "D05", 1.0), (18.5, "I02", 1.0), (26.5, "I03", 1.0),
                  (31.0, "hangup", 0.5), (31.2, "dialtone", 0.12), (35.0, "D06", 1.0)],
-                bed(0.012, 0.014, 0.006, buzz_gate=gate_from_schedule(irene_s, "n_hall_a")),
-                post=G.overlay(c, ("ON THE LINE: IRENE", "LA CROSSE", 5.0, 30.5))))
+                bed(0.012, 0.014, 0.006, buzz_gate=gate_from_schedule(paul_s, "n_hall_a")),
+                post=G.overlay(c, ("ON THE LINE: PAUL", "LA CROSSE", 5.0, 30.5))))
 
     # 1:58 AM: the count
     add(pause("14_pause", 25))

@@ -19,7 +19,7 @@ STYLE = {
     "denny_q": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 120 lowpass 7000 compand 0.02,0.2 -60,-60,-30,-15,0,-8 -3 reverb 16 30 40 gain -n -6"),
     "denny_w": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 160 lowpass 6000 reverb 22 30 50 gain -n -10"),
     "gary_phone": ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 320 lowpass 3300 overdrive 6 compand 0.01,0.1 -60,-60,-30,-12,0,-6 -2 gain -n -5"),
-    "irene":   ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 320 lowpass 3300 overdrive 6 compand 0.01,0.1 -60,-60,-30,-12,0,-6 -2 gain -n -5"),
+    "paul":    ("en_US-joe-medium", 1.0, 0.8, 0.9, "highpass 320 lowpass 3300 overdrive 6 compand 0.01,0.1 -60,-60,-30,-12,0,-6 -2 gain -n -5"),
     "memo":   ("en_US-lessac-medium", 1.22, 0.4,  0.5,  "pitch -300 highpass 300 lowpass 3200 overdrive 4 reverb 45 50 80 gain -n -5"),
 }
 

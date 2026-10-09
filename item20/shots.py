@@ -65,7 +65,7 @@ def n_open():
     return ("anim", n)
 
 
-# ------------------------------------------------------------------ 1:51 AM, Irene calls
+# ------------------------------------------------------------------ 1:51 AM, Paul Voss calls
 def n_hall(dim):
     """Standing just out of the elevator, looking down the hall while he takes the call. When the bad
     fixtures drop out, something is standing at the far end, in the dark. Barely."""

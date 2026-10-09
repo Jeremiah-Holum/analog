@@ -60,12 +60,9 @@ Whisper stays on the CPU on purpose: it's small, and it avoids a cuDNN install.
 
 ```bash
 cd /home/user/analog/film
-# a) Irene's voice: audition a few seeds, LISTEN to them (they're in /home/user/tts/irene), pick an older woman
-/home/user/tts/dia/bin/python dia_audition.py /home/user/tts/irene \
-  "Is this... am I on? (clears throat) Young man. You need to get back in that elevator, and you need to go home." 1 2 3 4 5 6 7 8
-cp /home/user/tts/irene/seedN.wav ../voices/irene.wav          # N = the one picked by ear
+# a) the caller's voice is already picked: voices/paul.wav (Dia seed 8, chosen by ear)
 
-# b) every line (Denny, Irene, Gary), checked by Whisper and the speaker encoder
+# b) every line (Denny, Paul, Gary), checked by Whisper and the speaker encoder
 FILM=item20 /home/user/tts/dia/bin/python voice_dia.py
 
 # c) renders on the GPU (stills + the three moving shots)
@@ -83,7 +80,7 @@ ffmpeg -y -i item20.mp4 -c:v libx264 -preset slow -b:v 330k -pass 2 -passlogfile
 ffmpeg -y -i item20.mp4 -vf "scale=1440:1080:flags=lanczos" -c:v libx264 -preset medium -b:v 2300k -pass 1 -passlogfile $P -an -f mp4 /dev/null
 ffmpeg -y -i item20.mp4 -vf "scale=1440:1080:flags=lanczos" -c:v libx264 -preset medium -b:v 2300k -pass 2 -passlogfile $P -pix_fmt yuv420p -c:a aac -b:a 160k -movflags +faststart item20_youtube.mp4
 cd .. && cp out_item20/item20_phone.mp4 renders/item20.mp4 && cp out_item20/item20_youtube.mp4 renders/item20_youtube.mp4
-git add voices/irene.wav renders/item20*.mp4 && git commit -m "ITEM 20: rendered on the GPU PC" && git pull --no-rebase && git push
+git add renders/item20*.mp4 && git commit -m "ITEM 20: rendered on the GPU PC" && git pull --no-rebase && git push
 ```
 
 Keep the YouTube file under 100 MB (GitHub's limit); lower `2300k` if needed.

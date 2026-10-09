@@ -9,12 +9,12 @@ VO = {
                      "ninety-six. And there's a rule up here. One rule. Do not count the offices."),
     "D03": ("denny", "(laughs) So that's exactly what we're gonna do. Lines are open, folks. Five five five, oh one one oh."),
     # 1:51 AM, a caller
-    "D04": ("denny", "Okay, we've got a caller. Marcy says, uh... Irene? Irene, you're on Coulee After Dark."),
-    "I01": ("irene", "Is this... am I on? (clears throat) Young man. You need to get back in that elevator, and you need to go home."),
+    "D04": ("denny", "Okay, we've got a caller. Marcy says, uh... Paul? Paul, you're on Coulee After Dark."),
+    "I01": ("paul", "Is this... (clears throat) Young man. You need to get back in that elevator, and you need to go home."),
     "D05": ("denny", "(laughs) Ma'am, it's carpet and drop ceilings. It's an office."),
-    "I02": ("irene", "My husband worked nights in that building. Nineteen sixty-eight. He counted, too."),
-    "I03": ("irene", "He got to ten. ... Don't you get to ten."),
-    "D06": ("denny", "Okay! Thank you, Irene. Spooky stuff. Uh, spooky stuff, folks."),
+    "I02": ("paul", "My dad worked nights in that building. Nineteen sixty-eight. He counted, too."),
+    "I03": ("paul", "He got to ten. ... Don't you get to ten."),
+    "D06": ("denny", "Okay! Thank you, Paul. Spooky stuff. Uh, spooky stuff, folks."),
     # 1:58 AM, the count
     "D07": ("denny", "Alright. The count. Live, on the air. Here we go."),
     "C10": ("denny", "Three... three ten? Huh."),
@@ -39,7 +39,7 @@ for _i, _w in enumerate(_N, 1):
 COUNTS = {}
 
 # Voices (voices/README.md). Denny is the take picked for "the next voice"; Gary is ITEM 15's Gary;
-# Irene was auditioned from Dia seeds (film/dia_audition.py).
+# Paul (Harold Voss's son, calling in) was auditioned from Dia seeds (film/dia_audition.py, seed 8), picked by ear.
 _PROMPT_TEXT = ("Okay, is it... yep. (clears throat) Good morning! Uh, Gary Lindqvist, Coulee Commercial Realty. "
                 "And this is the Brenner Mutual building. Four floors, forty thousand square feet, and, uh... "
                 "(laughs) folks, it's priced to move.")
@@ -47,10 +47,10 @@ DIA_PROMPTS = {
     "denny": ("voices/denny.wav", _PROMPT_TEXT), "denny_q": ("voices/denny.wav", _PROMPT_TEXT),
     "denny_w": ("voices/denny.wav", _PROMPT_TEXT),
     "gary_phone": ("voices/gary.wav", _PROMPT_TEXT),
-    "irene": ("voices/irene.wav", VO["I01"][1]),
+    "paul": ("voices/paul.wav", VO["I01"][1]),
 }
 DIA_PROMPT = DIA_PROMPTS["denny"]
-DIA_USE_PROMPT = "I01"     # Irene's first line is her audition take
+DIA_USE_PROMPT = "I01"     # Paul's first line is his audition take
 DIA_GROUPS = {
     "COUNT_A": ["C01", "C02", "C03", "C04"],
     "COUNT_B": ["C05", "C06", "C07", "C08", "C09"],
@@ -58,4 +58,4 @@ DIA_GROUPS = {
 }
 DELIVERY = {}
 # on-camera mic for Denny; callers come down a phone line into the broadcast
-LOUDNESS = {"denny": -19, "denny_q": -21, "denny_w": -25, "gary_phone": -22, "irene": -22}
+LOUDNESS = {"denny": -19, "denny_q": -21, "denny_w": -25, "gary_phone": -22, "paul": -22}
