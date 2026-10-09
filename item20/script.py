@@ -11,7 +11,7 @@ VO = {
     # 1:51 AM, a caller
     "D04": ("denny", "Okay, we've got a caller. Marcy says, uh... Paul? Paul, you're on Coulee After Dark."),
     "I01": ("paul", "Is this... (clears throat) Young man. You need to get back in that elevator, and you need to go home."),
-    "D05": ("denny", "(laughs) Ma'am, it's carpet and drop ceilings. It's an office."),
+    "D05": ("denny", "(laughs) Sir, it's carpet and drop ceilings. It's an office."),
     "I02": ("paul", "My dad worked nights in that building. Nineteen sixty-eight. He counted, too."),
     "I03": ("paul", "He got to ten. ... Don't you get to ten."),
     "D06": ("denny", "Okay! Thank you, Paul. Spooky stuff. Uh, spooky stuff, folks."),
