@@ -600,7 +600,7 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
 
     def v(p, r, parent=None, thin=0.8):
         r = r if isinstance(r, tuple) else (r, r)
-        if len(V) > 9:            # everything past the torso is thinner: the strands make up the bulk
+        if len(V) > 9 and thin != 1.0:   # limbs are thinner: the strands make up the bulk
             r = (r[0] * thin, r[1] * thin)
         V.append(p); R.append(r)
         if parent is not None:
@@ -616,10 +616,18 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
     back = v(spine((0, 0.025, 1.68)), (0.14, 0.11), rib2)
     # a neck that's too long, curling down and to the side
     n0 = v(spine((-0.02, -0.04, 1.78)), 0.042, back)
-    n1 = v(spine((-0.08, -0.08, 1.88)), 0.032, n0)
-    n2 = v(spine((-0.17, -0.1, 1.94)), 0.028, n1)
-    n3 = v(spine((-0.27, -0.11, 1.93)), 0.027, n2)
-    n4 = v(spine((-0.35, -0.12, 1.87)), 0.027, n3)
+    n1 = v(spine((-0.08, -0.08, 1.84)), 0.034, n0)
+    n2 = v(spine((-0.17, -0.11, 1.86)), 0.03, n1)
+    n3 = v(spine((-0.26, -0.13, 1.82)), 0.029, n2)
+    n4 = v(spine((-0.33, -0.15, 1.75)), 0.029, n3)
+    # the neck carries on into the skull base (the skull is a metaball shape fused onto this, below)
+    a3_, a4_ = V[n3], V[n4]
+    dd = [a4_[c] - a3_[c] for c in range(3)]
+    dn = math.sqrt(sum(c * c for c in dd)) or 1
+    dd = [c / dn for c in dd]
+    at = lambda base, u, off=(0, 0, 0): tuple(base[c] + dd[c] * u + off[c] for c in range(3))
+    hb = v(at(a4_, 0.06), 0.032, n4, thin=1.0)          # inside the skull's base
+    cr, cw = hb, hb
     chains = {}
     # --- right arm (sx=+1): too long, high shoulder, an extra joint, fingers dragging
     sx = 1
@@ -675,6 +683,7 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
         v((sx * 0.11, -flen + fwd, 0.012), (0.024, 0.009), toe)
         chains["l_leg" if sx < 0 else "r_leg"] = [P(hip), P(th_), P(th2), P(kn), P(calf), P(sh_), P(an)]
     chains["spine"] = [P(pel), P(waist), P(rib0), P(rib1), P(rib2), P(back), P(n0), P(n1), P(n2), P(n3), P(n4)]
+    chains["head"] = [P(n1), P(n2), P(n3), P(n4), P(hb), P(cr), P(cw)]        # tendons run up the neck onto the skull
 
     me = bpy.data.meshes.new("occ")
     me.from_pydata([(x * k, y * k, z * k) for x, y, z in V], E, [])
@@ -705,6 +714,35 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
         bpy.ops.object.shade_smooth()
         parts.append(o)
         return o
+    # the skull: one sculpted mesh (a sphere reshaped vertex by vertex), long and narrow, a bulge at the back,
+    # a brow, pinched temples, a jaw hanging down at the front. The neck runs up into its base. No face.
+    from mathutils import Vector
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, segments=48, ring_count=24, location=(0, 0, 0))
+    sk = bpy.context.object
+    sk.name = "skull"
+    for vt in sk.data.vertices:
+        x, y, z = vt.co                      # +z: crown (along the neck), -y: where a face would be
+        sx_, sy_, sz_ = 0.072, 0.09, 0.115
+        if y > 0:                            # the back of the skull bulges
+            sy_ *= 1.0 + 0.35 * max(0.0, z + 0.2)
+        if y < 0 and z > 0.1:                # brow
+            sy_ *= 1.0 + 0.12 * z
+        if y < -0.2 and 0.0 < z < 0.6:       # hollow temples
+            sx_ *= 1.0 - 0.18 * (1 - abs(z - 0.3) / 0.3) * min(1.0, -y)
+        if z < -0.2 and y < 0.2:             # the jaw drops down and forward, narrower
+            u = min(1.0, (-0.2 - z) / 0.8)
+            sz_ *= 1.0 + 0.55 * u
+            sy_ *= 1.0 + 0.25 * u * (1 if y < 0 else 0)
+            sx_ *= 1.0 - 0.3 * u
+        vt.co = Vector((x * sx_ * k, y * sy_ * k, z * sz_ * k))
+    q = Vector(dd).to_track_quat('Z', 'Y')
+    sk.rotation_mode = 'QUATERNION'
+    sk.rotation_quaternion = q
+    sk.location = tuple(c * k for c in at(a4_, 0.09))
+    sub_s = sk.modifiers.new("sub", 'SUBSURF'); sub_s.levels = 1; sub_s.render_levels = 2
+    sk.data.materials.append(skin)
+    bpy.ops.object.shade_smooth()
+    parts.append(sk)
     # vertebrae along the hunched back, shoulder blades, and ribs showing on the flanks
     for i in range(12):
         u = i / 11
@@ -716,14 +754,9 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
         for sx in (-1, 1):
             blob("rib", spine((sx * (0.13 + 0.02 * math.sin(i)), -0.03, z_)), (0.012, 0.075, 0.01),
                  rot=(0.3, 0, sx * 0.25), segs=12)
-    # the skull hangs at the end of the bent neck, crown toward you
-    a3, a4 = V[n3], V[n4]
-    dvec = [a4[c] - a3[c] for c in range(3)]
-    dl = math.sqrt(sum(c * c for c in dvec)) or 1
-    hc = tuple(a4[c] + dvec[c] / dl * 0.12 for c in range(3))          # continues on from the end of the neck
-    blob("skull", hc, (0.08, 0.1, 0.15), rot=(0.4 + head_tilt, -0.9, 0.2), segs=40)   # cocked, hanging sideways
     for o in parts[1:]:
-        dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.005 * k; dm.mid_level = 0.5
+        if o.type == 'MESH':
+            dm = o.modifiers.new("lumps", 'DISPLACE'); dm.texture = lumps; dm.strength = 0.005 * k; dm.mid_level = 0.5
 
     # stringy tissue: strands along the limbs, bridging the gaps, a few hanging loose
     def jitter(p, a):
@@ -745,7 +778,7 @@ def figure_real(loc, height=3.0, toward=None, facing=math.pi, stoop=0.5, head_ti
         return pts
     strands = []
     for name, chain in chains.items():
-        for _ in range({"spine": 16, "r_arm": 22, "l_arm": 10, "l_leg": 14, "r_leg": 14}[name]):
+        for _ in range({"spine": 16, "r_arm": 22, "l_arm": 10, "l_leg": 14, "r_leg": 14, "head": 10}[name]):
             lift = rnd.choice([0.008, 0.015, 0.03, 0.05])        # some lie on the skin, some pull away from it
             pts = along(chain, 6, lift if name != "spine" else lift * 1.6)
             strands.append(strand("tendon", [tuple(c * k for c in p) for p in pts],
