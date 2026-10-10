@@ -108,14 +108,16 @@ def click():
 
 
 def other_voice():
-    """Something counting along with Denny, half a beat ahead: his own count, lowered, close and dry, barely there.
+    """Something counting along with Denny, half a beat ahead: just the number from his line, lowered, close and
+    dry, barely there.
     E05..E14 from his C05..C14, and E15 from his final '...fifteen'."""
     import subprocess
     vo = os.path.join(project.OUT, "vo")
     for k, src in [(f"E{i:02d}", f"C{i:02d}") for i in range(5, 15) if i != 10] + [("E15", "D16")]:
         p = os.path.join(vo, src + ".wav")
         if os.path.exists(p):
-            subprocess.run(["sox", p, os.path.join(OUT, k + ".wav"), "pitch", "-480", "tempo", "-s", "0.92",
+            subprocess.run(["sox", p, os.path.join(OUT, k + ".wav"), "trim", "0", "1.0", "fade", "0", "1.0", "0.25",
+                            "pitch", "-480", "tempo", "-s", "0.92",
                             "highpass", "180", "lowpass", "3200", "reverb", "8", "20", "20", "gain", "-n", "-20"],
                            check=True, capture_output=True)
             print("wrote", k)

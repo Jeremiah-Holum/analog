@@ -62,6 +62,46 @@ def handheld(t, amp=1.0, seed=0):
     return dx, dy
 
 
+@lru_cache(None)
+def _reframes(seed):
+    """Every few seconds the operator shifts his weight or re-aims: a new resting offset, eased in with a
+    little overshoot. Returns [(t, dx, dy, roll, zoom)]."""
+    r = random.Random(seed * 31 + 7)
+    out, t = [(0.0, 0.0, 0.0, 0.0, 0.0)], 0.0
+    while t < 200:
+        t += r.uniform(2.5, 7.0)
+        out.append((t, r.uniform(-16, 16), r.uniform(-9, 9), r.uniform(-1.6, 1.6), r.uniform(-0.03, 0.03)))
+    return out
+
+
+def _value_noise(t, rate, seed):
+    """Smooth random wobble at roughly `rate` Hz, in -1..1."""
+    i = int(math.floor(t * rate))
+    u = t * rate - i
+    u = u * u * (3 - 2 * u)
+    a = random.Random(seed * 1000003 + i).uniform(-1, 1)
+    b = random.Random(seed * 1000003 + i + 1).uniform(-1, 1)
+    return a + (b - a) * u
+
+
+def human_cam(t, seed=0, amp=1.0):
+    """A person holding a camera on the shoulder while standing and talking: hand tremor, breathing,
+    a slow sway, and an occasional reframe (weight shift / re-aim) with a small tilt. -> dx, dy, roll, zoom"""
+    ev = _reframes(seed)
+    k = max(j for j in range(len(ev)) if ev[j][0] <= t)
+    t0, *prev = ev[k - 1] if k else ev[0]
+    t1, *cur = ev[k]
+    dur = 0.9
+    u = min(1.0, (t - t1) / dur)
+    e = 1 - (1 - u) ** 3 + 0.12 * math.sin(math.pi * u) * (1 - u)          # ease out with a little overshoot
+    base = [prev[c] + (cur[c] - prev[c]) * e for c in range(4)]
+    dx = base[0] + 6 * _value_noise(t, 0.35, seed + 1) + 1.1 * _value_noise(t, 9.0, seed + 2)
+    dy = base[1] + 3 * math.sin(2 * math.pi * 0.27 * t + seed) + 4 * _value_noise(t, 0.4, seed + 3) \
+        + 1.0 * _value_noise(t, 11.0, seed + 4)
+    roll = base[2] + 0.5 * _value_noise(t, 0.3, seed + 5) + 0.12 * _value_noise(t, 7.0, seed + 6)
+    return dx * amp, dy * amp, roll * amp, base[3] * amp
+
+
 def brightness(img, k):
     if abs(k - 1) < 1e-3:
         return img
@@ -316,10 +356,18 @@ def seq_frames(shot, date, clock0, play=False, hold_first=0.0, hold_last=0.0, pl
     return f
 
 
-def still_frames(schedule, date, clock0, play=False, shake=1.0, seed=0, zoom=None, play_for=3.0):
-    """schedule(t) -> (still name, brightness); zoom(t) -> (z, cx, cy) optional"""
+def still_frames(schedule, date, clock0, play=False, shake=1.0, seed=0, zoom=None, play_for=3.0, human=False):
+    """schedule(t) -> (still name, brightness); zoom(t) -> (z, cx, cy) optional.
+    human=True: a person holding the camera (tremor, breathing, reframes, tilt) instead of a smooth wobble."""
     def f(i, t):
         name, k = schedule(t)
+        if human:
+            dx, dy, roll, z = human_cam(t, seed, shake)
+            img = to_screen(still(name), dx, dy, 1.06 + z)
+            if abs(roll) > 0.02:
+                img = img.rotate(roll, resample=Image.BILINEAR)
+            img = brightness(img, k)
+            return cam_osd(img, date, clock0 + t, play and t < play_for)
         dx, dy = handheld(t, shake, seed)
         if zoom:
             z, cx, cy = zoom(t)

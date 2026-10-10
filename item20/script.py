@@ -31,11 +31,17 @@ VO = {
     "D15": ("denny_q", "Hello? (laughs) Building's empty, folks. There's nobody up here but me."),
     "D16": ("denny_w", "...Fifteen."),
 }
-# the count: he reads the plaques
-_N = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "", "eleven", "twelve", "thirteen", "fourteen"]
-for _i, _w in enumerate(_N, 1):
-    if _w:
-        VO[f"C{_i:02d}"] = ("denny", f"Three oh {_w}." if _i < 10 else f"Three {_w}.")
+# the count: he reads the plaques out like a person would, a little commentary, getting less sure of himself
+_COUNT = {
+    1: "Okay. Three oh one.", 2: "Three oh two, that's two.", 3: "Three oh three. Still here, folks.",
+    4: "Three oh four... four.", 5: "Three oh five. Nothing yet.", 6: "Three oh six, that's six.",
+    7: "Three oh seven. Halfway, I guess.", 8: "Three oh eight... eight.",
+    9: "Three oh nine. Nine. That's the floor, folks.",
+    11: "Three eleven... okay. Eleven.", 12: "Three twelve. That's, uh... twelve.", 13: "Three thirteen. Thirteen.",
+    14: "Three fourteen... that's fourteen.",
+}
+for _i, _t in _COUNT.items():
+    VO[f"C{_i:02d}"] = ("denny" if _i < 11 else "denny_q", _t)
 COUNTS = {}
 
 # Voices (voices/README.md). Denny is the take picked for "the next voice"; Gary is ITEM 15's Gary;
@@ -51,11 +57,7 @@ DIA_PROMPTS = {
 }
 DIA_PROMPT = DIA_PROMPTS["denny"]
 DIA_USE_PROMPT = "I01"     # Paul's first line is his audition take
-DIA_GROUPS = {
-    "COUNT_A": ["C01", "C02", "C03", "C04"],
-    "COUNT_B": ["C05", "C06", "C07", "C08", "C09"],
-    "COUNT_C": ["C11", "C12", "C13", "C14"],
-}
+DIA_GROUPS = {}   # the count used to be cut from grouped takes; now each door is its own line
 DELIVERY = {}
 # on-camera mic for Denny; callers come down a phone line into the broadcast
 LOUDNESS = {"denny": -19, "denny_q": -21, "denny_w": -25, "gary_phone": -22, "paul": -22}

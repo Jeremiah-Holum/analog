@@ -19,7 +19,7 @@ def still(sched, shake=0.9, seed=1, **kw):
     if isinstance(sched, str):
         name = sched
         sched = lambda t: (name, 1.0)
-    return still_frames(sched, None, 0, shake=shake, seed=seed, **kw)
+    return still_frames(sched, None, 0, shake=shake, seed=seed, human=True, **kw)
 
 
 def pause(name, seed):
@@ -116,13 +116,13 @@ def film():
         if t < 4.0:
             return ("n_door_lit", 1.0)
         if t < 5.2:
-            return ("n_door_lit", 1.0) if int(t * 9) % 3 == 0 else ("n_door_dark", 1.0)
+            return ("n_door_lit", 1.0) if int(t * 9) % 3 == 0 else ("n_door_dark", 1.5)
         if t < 6.4:
-            return ("n_door_dark", 1.0)
-        return ("n_door_fig", 1.0)
-    add(Segment("20_door", 9.6, still(door_s, 0.6, 6), "tv",
-                [(0.5, "knock_final", 0.9), (4.0, "drop", 0.25), (6.4, "stinger_big", 0.9), (7.4, "D16", 1.0)],
-                bed(0.014, 0.0, 0.008, "drone_low", 0.2), glitches=[(8.9, 0.7, 1.0)], post=G.overlay(c)))
+            return ("n_door_dark", 1.5)
+        return ("n_door_fig", 1.6)
+    add(Segment("20_door", 11.0, still(door_s, 0.6, 6), "tv",
+                [(0.5, "knock_final", 0.9), (4.0, "drop", 0.25), (6.4, "stinger_big", 0.9), (7.6, "D16", 1.0)],
+                bed(0.014, 0.0, 0.008, "drone_low", 0.2), glitches=[(10.3, 0.7, 1.0)], post=G.overlay(c)))
 
     # 2:11 AM
     add(Segment("21_standby", 9, G.standby_frames(), "card", [(0.0, "tone", 0.25)], bed(0.006), damage=True))

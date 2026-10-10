@@ -92,10 +92,12 @@ def n_hall(dim):
         kit.reset(202); M = kit.Mats()
         L, fx, _ = hall14(M)
         kit.elevator(M)
-        lv = {2: 0.0, 5: 0.05, 7: 0.0, 8: 0.0} if dim else {5: 0.3, 8: 0.25}
+        # when the light over it drops out, it's standing halfway down the hall, a black shape against the
+        # lit stretch behind it
+        lv = {1: 0.25, 2: 0.0, 3: 1.0, 4: 1.0, 5: 0.05, 7: 0.0, 8: 0.0} if dim else {3: 1.0, 4: 1.0, 5: 0.3, 8: 0.25}
         s1.static_levels(fx, lv)
         if dim:
-            kit.figure_real((0.3, L - 1.4, 0), toward=(0, 0), seed=3)
+            kit.figure_real((0.25, 7.6, 0), toward=(0.15, 0.9), seed=3)
         cam = kit.camera(26)
         cam_light(cam)
         look(cam, (0.15, 0.9, 1.62), (0.05, 14, 1.42), roll=0.015)
@@ -196,13 +198,18 @@ def n_door(variant):
     EXIT sign. 'dark_fig': same, and it is standing between him and the door, a silhouette against the red."""
     def build():
         kit.reset(206); M = kit.Mats()
-        L, fx, _ = hall14(M, modes=["dead"] * 9)
+        crack = {} if variant == "lit" else {"end_open": 0.3, "void": False}   # in the dark, the door is open a crack
+        L, fx, _ = hall14(M, modes=["dead"] * 9, **crack)
         s1.static_levels(fx)
         cam = kit.camera(22)
         look(cam, (0.05, L - 3.4, 1.55), (0.05, L, 1.62), roll=0.03)
         if variant == "lit":
             cam_light(cam, 60.0)
-        exit_glow(L, 2.5 if variant == "lit" else 4.0)
+        exit_glow(L, 2.5 if variant == "lit" else 7.0)
+        if variant != "lit":     # the corner office door stands a crack open: a sliver of grey light behind it
+            d = bpy.data.lights.new("crack", 'AREA'); d.size, d.energy, d.color = 0.4, 40.0, (0.75, 0.8, 0.9)
+            o = bpy.data.objects.new("crack", d); bpy.context.scene.collection.objects.link(o)
+            o.location = (0.0, L + 0.6, 1.2); o.rotation_euler = (math.radians(90), 0, math.radians(180))
         if variant == "dark_fig":
             kit.figure_real((-0.1, L - 1.15, 0), toward=(0.05, L - 3.4), head_tilt=0.1, seed=11)
         return ("still",)
