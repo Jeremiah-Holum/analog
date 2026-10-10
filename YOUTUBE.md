@@ -143,7 +143,7 @@ conversion (MIT), so it's clear for monetization.
 
 # ITEM 20: COULEE AFTER DARK
 
-- **Video:** `renders/item20_youtube.mp4` (4:50). Phone copy: `renders/item20.mp4`
+- **Video:** `renders/item20_youtube.mp4` (4:52). Phone copy: `renders/item20.mp4`
 - **Title:** `please stand by` (alternatives: *555-0110*, *don't you get to ten*, *we'll be right back*)
 
 ```
