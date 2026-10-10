@@ -67,7 +67,7 @@ def film():
     c = T(1, 51, 40)
     def paul_s(t):     # the far lights drop out around "He got to ten." It's standing at the far end. Barely.
         if 27.0 <= t < 27.5 or 28.1 <= t < 29.4:
-            return ("n_hall_b", 1.0)
+            return ("n_hall_b", 1.4)
         return ("n_hall_a", 1.0)
     add(Segment("13_paul", 43.5, still(paul_s, 0.8, 3), "tv",
                 [(0.8, "D04", 1.0), (5.5, "I01", 1.0), (14.0, "D05", 1.0), (18.5, "I02", 1.0), (26.5, "I03", 1.0),
