@@ -51,7 +51,7 @@ def film():
                                              typed=False, align="center"), "card", [(0, "vcr", 0.5)], bed(0.01)))
     add(pause("05_rec", 23))
     # back from the break
-    add(Segment("06_bumper", 6.5, G.bumper_frames(), "card", [(0.0, "bumper", 0.9)], bed(0.008), damage=True))
+    add(Segment("06_bumper", 4.0, G.bumper_frames(), "card", [(0.0, "bumper", 0.8)], bed(0.008), damage=True))
 
     # 1:44 AM: the elevator opens on three
     c = T(1, 44, 12)
@@ -106,27 +106,22 @@ def film():
     add(Segment("18_knock", 14, still(gs, 0.7, 5), "tv",
                 [(0.8, "knock_guard", 0.6), (2.6, "D13", 1.0), (6.2, "knock_guard", 0.8), (8.0, "D14", 1.0)],
                 bed(0.012, 0.01, 0.006, buzz_gate=gate_from_schedule(gs, "n_gary_a")), post=G.overlay(c)))
-    add(Segment("19_approach", SHOT_LEN["n_approach"] / FPS, seq("n_approach"), "tv",
-                [(7.4, "D15", 1.0)] + steps(1.2, 12.0, 1.5), bed(0.012, 0.004, 0.006, "drone_low", 0.12),
-                post=G.overlay(c + 14)))
-
-    # 2:10 AM: the door. The top light goes. In the red of the EXIT sign it is right there.
-    c = T(2, 10, 31)
-    def door_s(t):
-        if t < 4.0:
-            return ("n_door_lit", 1.0)
-        if t < 5.2:
-            return ("n_door_lit", 1.0) if int(t * 9) % 3 == 0 else ("n_door_dark", 1.5)
-        if t < 6.4:
-            return ("n_door_dark", 1.5)
-        return ("n_door_fig", 1.6)
-    add(Segment("20_door", 11.0, still(door_s, 0.6, 6), "tv",
-                [(0.5, "knock_final", 0.9), (4.0, "drop", 0.25), (6.4, "stinger_big", 0.9), (7.6, "D16", 1.0)],
-                bed(0.014, 0.0, 0.008, "drone_low", 0.2), glitches=[(10.3, 0.7, 1.0)], post=G.overlay(c)))
+    # 2:09 AM: he sets the camera down on the tripod and goes to look
+    add(Segment("19_setdown", 7.5, still(gs, 1.2, 7), "tv", [(0.4, "D17", 1.0), (6.7, "handle", 0.8)],
+                bed(0.012, 0.004, 0.006), glitches=[(6.8, 0.7, 0.6)], post=G.overlay(c + 14)))
+    # the tripod shot: his flashlight walks away into the dark. Fifteen doors. The light drops. It steps in.
+    c = T(2, 10, 24)
+    add(Segment("20_tripod", SHOT_LEN["n_tripod"] / FPS, seq("n_tripod", bright=1.35), "tv",
+                steps(1.6, 21.0, 1.6, gain=0.4, fade_to=0.04)
+                + [(21.6, "D18", 1.0), (25.8, "D19", 1.0), (27.5, "drop", 0.55), (27.9, "drag", 0.12),
+                   (30.4, "step_heavy", 0.18)],
+                bed(0.014, 0.0, 0.008, "drone_low", 0.16), glitches=[(35.3, 0.7, 1.0)], post=G.overlay(c)))
 
     # 2:11 AM
     add(Segment("21_standby", 9, G.standby_frames(), "card", [(0.0, "tone", 0.25)], bed(0.006), damage=True))
-    add(Segment("22_bbs", 25, G.bbs_frames(), "card", [(0.0, "bbs", 0.35)], bed(0.006), damage=True))
+    # the bulletin board rolls; under its music the station's phone line comes back up. It's Denny. Still counting.
+    add(Segment("22_bbs", 25, G.bbs_frames(), "card", [(0.0, "bbs", 0.3), (8.5, "D20", 1.0), (17.0, "hangup", 0.4)],
+                bed(0.006), damage=True))
     add(Segment("23_static", 1.2, static_frames(27), "clean", [(0, "static", 0.7)], damage=False))
     add(Segment("24_stop", 3.0, blue_frames("STOP ■", 0.3), "clean", [(0.2, "vcr_eject", 0.6)], bed(0.004), damage=False))
 
