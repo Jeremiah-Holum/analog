@@ -111,7 +111,11 @@ def film():
                 bed(0.012, 0.004, 0.006), glitches=[(6.8, 0.7, 0.6)], post=G.overlay(c + 14)))
     # the tripod shot: his flashlight walks away into the dark. Fifteen doors. The light drops. It steps in.
     c = T(2, 10, 24)
-    add(Segment("20_tripod", SHOT_LEN["n_tripod"] / FPS, seq("n_tripod", bright=1.35), "tv",
+    def creep(t):    # once he stops, the picture slowly pushes in on the far end of the hall
+        u = min(1.0, max(0.0, (t - 19.0) / 11.0))
+        u = u * u * (3 - 2 * u)
+        return (1.0 + 1.6 * u, 192 + 6 * u, 144 + 4 * u)
+    add(Segment("20_tripod", SHOT_LEN["n_tripod"] / FPS, seq("n_tripod", bright=1.35, zoom=creep), "tv",
                 steps(1.6, 21.0, 1.6, gain=0.4, fade_to=0.04)
                 + [(21.6, "D18", 1.0), (25.8, "D19", 1.0), (27.5, "drop", 0.55), (27.9, "drag", 0.12),
                    (30.4, "step_heavy", 0.18)],
