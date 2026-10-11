@@ -216,6 +216,72 @@ def n_door(variant):
     return build
 
 
+# ------------------------------------------------------------------ 2:09 AM, the tripod
+def n_tripod():
+    """He sets the camera down in the middle of the hall, pointed at the far end, and walks away into the dark
+    with his flashlight. All you see is the beam. There are fifteen doors now. At the far end he stops at 315.
+    The flashlight drops and rolls. A while later something steps into its light: legs only. It stays."""
+    sc = kit.reset(207); M = kit.Mats()
+    L, fx, _ = kit.hallway(M, 15, modes=["dead"] * 8 + ["dying", "dead"], tail=4.0, seed=20)
+    kit.clutter_hall(M, L, seed=21)
+    n = SHOT_LEN["n_tripod"]; s1.set_frames(sc, n)
+    s1.animate_all(fx, n, {i: (lambda f: 0.0) for i in range(10) if i != 8})
+    exit_glow(L, 3.0)
+    cam = kit.camera(42)                                          # zoomed in down the hall
+    look(cam, (0.15, 9.3, 1.32), (0.0, L, 1.05), roll=0.02)
+    d = bpy.data.lights.new("flashlight", 'SPOT')
+    d.energy, d.spot_size, d.spot_blend, d.shadow_soft_size = 450.0, math.radians(34), 0.35, 0.02
+    d.color = (1.0, 0.9, 0.75)
+    fl = bpy.data.objects.new("flashlight", d)
+    sc.collection.objects.link(fl)
+    door315 = (-1.1, 2.5 + 7 * 3.2 + 0.8 + 0.72, 1.5)          # the fifteenth plaque
+    t_walk0, t_walk1, t_stop, t_look, t_drop = 1.5, 21.0, 21.0, 22.5, 27.5
+
+    def pose(t):
+        if t < t_walk0:
+            u = t / t_walk0
+            return (0.3, 9.6 + 0.3 * u, 1.25), (0.0, 13.5, 0.0)
+        if t < t_walk1:
+            u = (t - t_walk0) / (t_walk1 - t_walk0)
+            y = 9.9 + (25.0 - 9.9) * u
+            pos = (0.15 + 0.06 * math.sin(2 * math.pi * 0.9 * t), y, 1.2 + 0.035 * math.sin(2 * math.pi * 1.8 * t))
+            k = int((t - t_walk0) / 2.3)                         # sweeps the beam at the doors as he goes
+            ph = ((t - t_walk0) % 2.3) / 2.3
+            w = smooth(ph / 0.35) - smooth((ph - 0.6) / 0.35)
+            side = -1 if k % 2 == 0 else 1
+            tgt = (side * 1.1 * w, y + 3.5 - 2.0 * w, 0.0 + 1.4 * w)      # the floor ahead, then a door
+            return pos, tgt
+        pos = (0.15, 25.0, 1.2)
+        if t < t_drop:
+            w = smooth((t - t_look) / 1.0)
+            ahead = (0.0, 28.0, 0.3)
+            return pos, tuple(ahead[c] + (door315[c] - ahead[c]) * w for c in range(3))
+        u = min(1.0, (t - t_drop) / 0.4)                          # it falls, then rolls to a stop
+        z = 1.2 - 1.12 * u * u
+        r = smooth((t - t_drop - 0.4) / 1.2)
+        rest = (0.15 + 0.35 * r, 25.0 + 0.5 * r, z)
+        tgt = (0.5 - 0.4 * r, 28.6, 0.0) if u >= 1 else (door315[0] * (1 - u), door315[1], door315[2] * (1 - u))
+        return rest, tgt
+    for f in range(1, n + 1, 2):
+        pos, tgt = pose((f - 1) / FPS)
+        look(fl, pos, tgt)
+        fl.keyframe_insert("location", frame=f)
+        fl.keyframe_insert("rotation_euler", frame=f)
+    # it steps into the light on the floor, legs only, and stays
+    fig = kit.figure_real((0.25, 27.9, 0), toward=(0.15, 9.3), seed=11)
+    f_in = int(30.5 * FPS)
+    parts = [fig] + list(fig.children_recursive)
+    for f, h in ((1, True), (f_in - 1, True), (f_in, False)):
+        for o in parts:
+            o.hide_render = h
+            o.keyframe_insert("hide_render", frame=f)
+    fig.location.y = 28.5
+    fig.keyframe_insert("location", frame=f_in)
+    fig.location.y = 27.9
+    fig.keyframe_insert("location", frame=f_in + 18)
+    return ("anim", n)
+
+
 STILLS = {
     "n_hall_a": n_hall(False), "n_hall_b": n_hall(True),
     "n_gary_a": n_gary(False), "n_gary_b": n_gary(True),
@@ -225,5 +291,6 @@ ANIMS = {
     "n_open": n_open,
     "n_count": n_count,
     "n_approach": n_approach,
+    "n_tripod": n_tripod,
 }
 ALL = {**STILLS, **ANIMS}

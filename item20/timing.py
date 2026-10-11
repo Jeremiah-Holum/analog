@@ -22,4 +22,5 @@ SHOT_LEN = {
     "n_open": 9 * FPS,
     "n_count": int(DENNY_COUNT["dur"] * FPS),
     "n_approach": 14 * FPS,
+    "n_tripod": 36 * FPS,
 }

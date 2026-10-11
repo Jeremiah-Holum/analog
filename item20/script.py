@@ -30,6 +30,12 @@ VO = {
     "D14": ("denny_q", "It's coming from the end. The, uh... the corner office."),
     "D15": ("denny_q", "Hello? (laughs) Building's empty, folks. There's nobody up here but me."),
     "D16": ("denny_w", "...Fifteen."),
+    # 2:09 AM: he sets the camera down and goes to look, with his flashlight
+    "D17": ("denny_q", "Okay... I'm gonna set you guys down right here. Stay with me. (sighs) Stay with me, folks."),
+    "D18": ("denny_far", "Three fourteen... three fifteen? Marcy... Marcy, there's another one."),
+    "D19": ("denny_far", "Hello?"),
+    # after the broadcast cuts out, the station's phone line comes back up
+    "D20": ("denny_phone", "...sixteen... seventeen... eighteen..."),
 }
 # the count: he reads the plaques out like a person would, a little commentary, getting less sure of himself
 _COUNT = {
@@ -51,7 +57,8 @@ _PROMPT_TEXT = ("Okay, is it... yep. (clears throat) Good morning! Uh, Gary Lind
                 "(laughs) folks, it's priced to move.")
 DIA_PROMPTS = {
     "denny": ("voices/denny.wav", _PROMPT_TEXT), "denny_q": ("voices/denny.wav", _PROMPT_TEXT),
-    "denny_w": ("voices/denny.wav", _PROMPT_TEXT),
+    "denny_w": ("voices/denny.wav", _PROMPT_TEXT), "denny_far": ("voices/denny.wav", _PROMPT_TEXT),
+    "denny_phone": ("voices/denny.wav", _PROMPT_TEXT),
     "gary_phone": ("voices/gary.wav", _PROMPT_TEXT),
     "paul": ("voices/paul.wav", VO["I01"][1]),
 }
@@ -60,4 +67,4 @@ DIA_USE_PROMPT = "I01"     # Paul's first line is his audition take
 DIA_GROUPS = {}   # the count used to be cut from grouped takes; now each door is its own line
 DELIVERY = {}
 # on-camera mic for Denny; callers come down a phone line into the broadcast
-LOUDNESS = {"denny": -19, "denny_q": -21, "denny_w": -25, "gary_phone": -22, "paul": -22}
+LOUDNESS = {"denny": -19, "denny_q": -21, "denny_w": -25, "denny_far": -31, "denny_phone": -27, "gary_phone": -22, "paul": -22}
